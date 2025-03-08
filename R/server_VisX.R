@@ -80,6 +80,26 @@ server_VisX <- function(data) {
     },  height = 600, width = 1000)
 
     # categorical variable tab
+    output$vars_bin <- renderUI({
+      selectInput("vars_bin", "Variable to collapse",
+                  choices = colnames(df_lst$df_all)[df_lst$var_type!="numeric"])
+    })
+    output$levels <- renderUI({
+      checkboxGroupInput("lev", "Levels to collapse",
+                         choices = levels(as.factor(df_lst$df_all[, input$vars_bin])))
+    })
+
+    observeEvent(input$cattrans,{
+      new_var <- ifelse(df_lst$df_all[ , input$vars_bin] %in% input$lev,
+                        input$newcat, df_lst$df_all[ , input$vars_bin])
+      new_var <- data.frame(new_var)
+      colnames(new_var) <- paste(input$vars_bin, "_bin", sep = "")
+      df_lst$df_new_cat <- bind_cols(df_lst$df_new_cat, new_var)
+      df_lst$new_type_cat <- c(df_lst$new_type_cat, input$binned_type)
+      df_lst$df_all <- bind_cols(df_lst$df_all, new_var)
+      df_lst$var_type <- c(df_lst$var_type, input$binned_type)
+    })
+
     ## disaplay original variables
     output$cat_vars <- renderPlot({
       if(any(df_lst$var_type != "numeric")){

@@ -38,13 +38,11 @@ ui <- function(request){
                                        radioButtons("binned_type", "Type of new variable",
                                                     choices = list("nominal" = "factor",
                                                                    "ordinal" = "ordinal")),
-                                       actionButton("cattrans", "Update")),
+                                       actionButton("cattrans", "Update"))),
 
                     # panel for correlation input
                     conditionalPanel(condition = "input.tabs1=='Network Plot of Correlation and Association'" ,
                                      uiOutput("vars_cor"),
-                                     actionButton("newvars_cor", "Update"),
-                                     br(),
                                      # correlation threshold
                                      sliderInput("min_cor", "Minimum correlation shown", min = 0, max = 1, value = .3),
                                      # significance
@@ -52,27 +50,23 @@ ui <- function(request){
                                                   choices = c(0.05, 0.1, "none"),
                                                   selected = "none")
                     ),
-                    width = 2)),
+                    width = 2),
 
                   # main panel
                   mainPanel(
                     tabsetPanel(id="tabs1",
-                                # histograms for numeric variables
-                                tabPanel("Numeric variables",
-                                         plotOutput("num_vars", inline = T)),
-
-                                # barplots for categorical variables
-                                tabPanel("Categorical variables",
-                                         plotOutput("cat_vars", inline = T)),
-
                                 # correlation plot tab
                                 tabPanel(title = "Network Plot of Correlation and Association",
                                          plotOutput("npc")),
-
+                                # histograms for numeric variables
+                                tabPanel("Numeric variables",
+                                         plotOutput("num_vars", inline = T)),
+                                # barplots for categorical variables
+                                tabPanel("Categorical variables",
+                                         plotOutput("cat_vars", inline = T)),
                                 # correlation matrix tab
                                 tabPanel(title = "Correlation and association matrix",
                                          htmlOutput("cormat")),
-
                                 # statistics tab
                                 tabPanel(title = "Statistics",
                                          htmlOutput("stat")),
