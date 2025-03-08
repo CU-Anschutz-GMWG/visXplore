@@ -11,12 +11,6 @@ ui <- function(request){
     sidebarLayout(position = "left",
                   # side panel
                   sidebarPanel(
-                    # upload file
-                    conditionalPanel(condition = "input.tabs1 == 'Data'",
-                                     fileInput("bl_df", "Upload file", accept = ".csv"),
-                                     uiOutput("initial_vars"),
-                                     actionButton("init", "Initialize"),
-                                     h5("Note: Re-initialization may override previous operations")),
                     # numeric variables
                     conditionalPanel(condition = "input.tabs1 == 'Numeric variables'",
                                      uiOutput("vars_dist"),
@@ -45,17 +39,7 @@ ui <- function(request){
                                                     choices = list("nominal" = "factor",
                                                                    "ordinal" = "ordinal")),
                                        actionButton("cattrans", "Update")),
-                                     # Dichotomization?
-                                     h4("Dichotomization"),
-                                     wellPanel(
-                                       uiOutput("vars_bi"),
-                                       uiOutput("thres"),
-                                       textInput("high_lev", "Name higher level (greater than threshold)"),
-                                       textInput("low_lev", "Name lower level (less than/equal to threshold)"),
-                                       radioButtons("bi_type", "Type of new variable",
-                                                    choices = list("nominal" = "factor",
-                                                                   "ordinal" = "ordinal")),
-                                       actionButton("dichot", "Create variable"))),
+
                     # panel for correlation input
                     conditionalPanel(condition = "input.tabs1=='Network Plot of Correlation and Association'" ,
                                      uiOutput("vars_cor"),
@@ -68,32 +52,18 @@ ui <- function(request){
                                                   choices = c(0.05, 0.1, "none"),
                                                   selected = "none")
                     ),
-                    br(),
-                    bookmarkButton(),
-                    downloadButton("downloadData", "Download data"),
-                    width = 2),
+                    width = 2)),
 
                   # main panel
                   mainPanel(
                     tabsetPanel(id="tabs1",
-                                # data
-                                tabPanel("Data",
-                                         dataTableOutput("data"),
-                                         span(htmlOutput("datacheck"),
-                                              style="color:red; font-size: 20px")),
                                 # histograms for numeric variables
                                 tabPanel("Numeric variables",
-                                         h4("Original variables"),
-                                         plotOutput("dist_org", inline = T),
-                                         h4("Transformed variables"),
-                                         plotOutput("dist_trans", inline = T)),
+                                         plotOutput("num_vars", inline = T)),
 
                                 # barplots for categorical variables
                                 tabPanel("Categorical variables",
-                                         h4("Original variables"),
-                                         plotOutput("bar_org", inline = T),
-                                         h4("Transformed variables"),
-                                         plotOutput("bar_trans", inline = T)),
+                                         plotOutput("cat_vars", inline = T)),
 
                                 # correlation plot tab
                                 tabPanel(title = "Network Plot of Correlation and Association",
@@ -104,8 +74,11 @@ ui <- function(request){
                                          htmlOutput("cormat")),
 
                                 # statistics tab
-                                # tabPanel(title = "Statistics",
-                                #          htmlOutput("stat")),
+                                tabPanel(title = "Statistics",
+                                         htmlOutput("stat")),
+                                # data
+                                tabPanel("Data",
+                                         DT::DTOutput("data")),
 
                                 # check
                                 tabPanel(title = "Note",

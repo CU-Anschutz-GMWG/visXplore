@@ -1,7 +1,7 @@
 Package: VisX
 Type: Package
 Title: Visual interactive model selection
-Version: 0.3.0
+Version: 1.0.0.9000
 Authors@R: c(person("Ying", "Jin", email = "ying.jin@cuanschutz.edu", role = "cre"),
              person("Ryan", "Peterson", email = "ryan.a.peterson@cuanschutz.edu", role = "aut"),
              person("Carsten", "Goerg", email = "carsten.goerg@cuanschutz.edu", role = "aut"))

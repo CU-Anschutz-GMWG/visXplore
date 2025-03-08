@@ -39,6 +39,7 @@
 #'
 
 
-VisX <- function(){
-  shinyApp(ui = ui, server = server, enableBookmarking = "server", options = list(width = 1600, height = 900))
+VisX <- function(data){
+  server <- server_VisX(data)
+  shinyApp(ui = ui, server = server, options = list(width = 1600, height = 900))
 }
