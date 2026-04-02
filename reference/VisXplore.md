@@ -1,0 +1,40 @@
+# Run the VisXplore application
+
+This function starts the VisXplore application for basic data
+pre-processing and variable selection.
+
+`VisX()` is a deprecated alias for `VisXplore()`.
+
+## Usage
+
+``` r
+VisXplore(data)
+
+VisX(data)
+```
+
+## Arguments
+
+- data:
+
+  a data.frame to explore
+
+## Value
+
+Histograms for continuous variables;
+
+Barplots for discrete variables;
+
+Correlation diagram;
+
+Variance inflation factors (VIFs) and R-squared;
+
+Correlation coefficient and p values from correlation test
+
+## Details
+
+This application currently supports files in csv format.
+
+Application interface will pop up after calling this function; data can
+be uploaded in that interface; close the interface or interrupt R to
+stop the application.
