@@ -157,14 +157,8 @@ video](https://img.youtube.com/vi/aZfLty00Mrc/0.jpg)](https://www.youtube.com/wa
   : Check for columns that are empty or identical
 - [`get_r2()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/get_r2.md)
   : R-squared
-- [`make_bar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/make_bar.md)
-  : Visualize categorical variables
-- [`make_hist()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/make_hist.md)
-  : Visualize numeric variables
 - [`npc_mixed_cor()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/npc_mixed_cor.md)
   : Network Plot of Association
-- [`pair_cor()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/pair_cor.md)
-  : Calculate association measure between a pair of variables
 - [`pairwise_cor()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/pairwise_cor.md)
   : Calculate pairwise association of data with mixed types of variables
 - [`plot(`*`<visx_cor>`*`)`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/plot.visx_cor.md)
