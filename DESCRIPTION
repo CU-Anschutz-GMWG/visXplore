@@ -15,27 +15,24 @@ Imports:
     car,
     dplyr,
     DT,
-    fastDummies,
     ggplot2,
     ggnewscale,
     ggrepel,
     Hmisc,
     janitor,
     kableExtra,
-    knitr,
     MESS,
     nnet,
-    readr,
     rlang,
     shiny,
     stats,
-    stringr,
     tibble,
     tidyr
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Suggests:
     golem,
+    knitr,
     processx,
     rmarkdown,
     shinytest2,

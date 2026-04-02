@@ -11,7 +11,7 @@
 #'
 #' @return Annotated histograms in numeric variable tab
 #' @import ggplot2
-#'
+#' @noRd
 
 make_hist <- function(df_hist){
   p <- df_hist %>%
@@ -43,7 +43,7 @@ make_hist <- function(df_hist){
 #'
 #' @return Barplots in categorical variable tab
 #' @import ggplot2
-#'
+#' @noRd
 
 make_bar <- function(df_bar){
   p <- df_bar %>%

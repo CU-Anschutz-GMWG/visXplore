@@ -20,21 +20,6 @@
 #'
 #' @export
 #' @import shiny
-#' @import dplyr
-#' @import ggplot2
-#' @importFrom janitor clean_names
-#' @importFrom fastDummies dummy_cols
-#' @importFrom kableExtra kable
-#' @importFrom kableExtra kable_styling
-#' @importFrom kableExtra pack_rows
-#' @importFrom kableExtra add_header_above
-#' @importFrom kableExtra scroll_box
-#' @importFrom car vif
-#' @import knitr
-#' @import readr
-#' @import stringr
-#' @import tibble
-#' @importFrom tidyr pivot_longer
 #'
 
 VisXplore <- function(data){

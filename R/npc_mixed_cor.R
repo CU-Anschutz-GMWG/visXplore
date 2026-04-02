@@ -18,7 +18,7 @@
 #' @import ggplot2
 #' @import ggrepel
 #' @importFrom stats as.formula ave cmdscale lm rnorm sd
-#' @importFrom utils read.csv sessionInfo
+#' @importFrom utils sessionInfo
 #' @importFrom ggnewscale new_scale_color
 #'
 #' @examples

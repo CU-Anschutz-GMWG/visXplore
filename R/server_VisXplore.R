@@ -3,19 +3,14 @@
 #' @import ggplot2
 #' @importFrom DT DTOutput renderDT
 #' @importFrom janitor clean_names
-#' @importFrom fastDummies dummy_cols
 #' @importFrom kableExtra kable
 #' @importFrom kableExtra kable_styling
 #' @importFrom kableExtra pack_rows
 #' @importFrom kableExtra add_header_above
 #' @importFrom kableExtra scroll_box
 #' @importFrom car vif
-#' @import knitr
-#' @import readr
-#' @import stringr
-#' @import tibble
+#' @importFrom tibble rownames_to_column
 #' @importFrom tidyr pivot_longer
-#' @importFrom utils write.csv
 
 server_VisXplore <- function(data) {
   force(data)
