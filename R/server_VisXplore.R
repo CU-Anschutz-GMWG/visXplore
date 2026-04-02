@@ -18,6 +18,7 @@
 #' @importFrom utils write.csv
 
 server_VisXplore <- function(data) {
+  force(data)
   server <- function(input, output, session){
 
     # upload data
@@ -27,6 +28,13 @@ server_VisXplore <- function(data) {
     df_lst <- reactiveValues(df_all=data, var_type=sapply(data, class),
                              df_new_num=NULL, new_type_num=NULL,
                              df_new_cat=NULL, new_type_cat=NULL)
+
+    # numeric variable selector
+    output$vars_dist <- renderUI({
+      num_names <- colnames(df_lst$df_all)[df_lst$var_type == "numeric"]
+      checkboxGroupInput("vars_dist", "Numeric variables",
+                         choices = num_names, selected = num_names)
+    })
 
     # data tab
     output$data <- DT::renderDT({bl_df() %>% clean_names(case = "none")},
@@ -87,13 +95,14 @@ server_VisXplore <- function(data) {
                   choices = colnames(df_lst$df_all)[df_lst$var_type!="numeric"])
     })
     output$levels <- renderUI({
+      req(input$vars_bin)
       checkboxGroupInput("lev", "Levels to collapse",
-                         choices = levels(as.factor(df_lst$df_all[, input$vars_bin])))
+                         choices = levels(as.factor(df_lst$df_all[[input$vars_bin]])))
     })
 
     observeEvent(input$cattrans,{
-      new_var <- ifelse(df_lst$df_all[ , input$vars_bin] %in% input$lev,
-                        input$newcat, df_lst$df_all[ , input$vars_bin])
+      new_var <- ifelse(df_lst$df_all[[input$vars_bin]] %in% input$lev,
+                        input$newcat, df_lst$df_all[[input$vars_bin]])
       new_var <- data.frame(new_var)
       colnames(new_var) <- paste(input$vars_bin, "_bin", sep = "")
       df_lst$df_new_cat <- bind_cols(df_lst$df_new_cat, new_var)
@@ -119,15 +128,25 @@ server_VisXplore <- function(data) {
     # correlation diagram panel
     output$vars_cor <- renderUI({
       checkboxGroupInput("vars_cor", "Variables to visualise",
-                         choices =  colnames(df_lst$df_all))
+                         choices =  colnames(df_lst$df_all),
+                         selected = colnames(df_lst$df_all))
     })
 
     # network plot
     output$npc <- renderPlot({
-      cor_mats <- pairwise_cor(df_lst$df_all, df_lst$var_type)
+      req(input$vars_cor)
+      sel <- input$vars_cor
+      idx <- which(colnames(df_lst$df_all) %in% sel)
+      df_sub <- df_lst$df_all[, idx, drop = FALSE]
+      type_sub <- df_lst$var_type[idx]
 
-      npc_mixed_cor(cor_mats, show_signif=input$signif!="none",
-                    sig.level = input$signif,
+      cor_mats <- pairwise_cor(df_sub, type_sub)
+
+      show_sig <- input$signif != "none"
+      sig_val <- if (show_sig) as.numeric(input$signif) else 0.05
+
+      npc_mixed_cor(cor_mats, show_signif = show_sig,
+                    sig.level = sig_val,
                     min_cor = input$min_cor)
     }, height = 800, width = 800)
 
@@ -160,20 +179,37 @@ server_VisXplore <- function(data) {
     })
 
 
+    output$vars_stat <- renderUI({
+      checkboxGroupInput("vars_stat", "Variables to include",
+                         choices = colnames(df_lst$df_all),
+                         selected = colnames(df_lst$df_all))
+    })
+
     output$stat <- renderText({
+      req(input$vars_stat)
+      sel <- input$vars_stat
+      idx <- which(colnames(df_lst$df_all) %in% sel)
+      df_sub <- df_lst$df_all[, idx, drop = FALSE]
+      type_sub <- df_lst$var_type[idx]
+
       # inter-correlation statistics
-      df_vif <- mutate(df_lst$df_all, y=rnorm(nrow(df_lst$df_all)))
-      non_num_idx <- which(df_lst$var_type != "numeric")
+      df_vif <- mutate(df_sub, y=rnorm(nrow(df_sub)))
+      non_num_idx <- which(type_sub != "numeric")
       df_vif <- mutate(df_vif, across(all_of(non_num_idx), as.factor))
-      vifs <- round(vif(lm(y ~ ., data = df_vif)), 2)
-      r2 <- get_r2(df_lst$df_all, df_lst$var_type)
+      vifs <- vif(lm(y ~ ., data = df_vif))
+      r2 <- get_r2(df_sub, type_sub)
       r2 <- round(r2, 2)
-      var_labs <- factor(df_lst$var_type, levels = c("numeric", "factor", "ordinal"),
+      var_labs <- factor(type_sub, levels = c("numeric", "factor", "ordinal"),
                          labels = c("numeric", "nominal", "ordinal"))
       var_labs <- droplevels(var_labs)
 
-      tb <- data.frame(vifs, r2)
-      colnames(tb)<- c("GVIF", "DF", "Adjusted GVIF", "R-squared")
+      if (is.matrix(vifs)) {
+        tb <- data.frame(round(vifs, 2), "R-squared" = r2, check.names = FALSE)
+        colnames(tb) <- c("GVIF", "DF", "Adjusted GVIF", "R-squared")
+      } else {
+        tb <- data.frame(VIF = round(vifs, 2), "R-squared" = r2, check.names = FALSE)
+        colnames(tb) <- c("VIF", "R-squared")
+      }
       tb[order(var_labs), ] %>%
         kable(escape = F) %>%
         kable_styling(full_width = F) %>%

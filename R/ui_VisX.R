@@ -50,6 +50,11 @@ ui <- function(request){
                                                   choices = c(0.05, 0.1, "none"),
                                                   selected = "none")
                     ),
+
+                    # panel for statistics input
+                    conditionalPanel(condition = "input.tabs1=='Statistics'",
+                                     uiOutput("vars_stat")
+                    ),
                     width = 2),
 
                   # main panel

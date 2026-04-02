@@ -38,6 +38,7 @@
 #'
 
 VisXplore <- function(data){
+  if (missing(data)) stop("Please provide a data.frame, e.g. VisXplore(mtcars)")
   server <- server_VisXplore(data)
   shinyApp(ui = ui, server = server, options = list(width = 1600, height = 900))
 }

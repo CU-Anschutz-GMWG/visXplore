@@ -22,7 +22,7 @@ make_hist <- function(df_hist){
            N = sum(!is.na(value))) %>%
     mutate(name = paste(name, " (N = ", N, ")", sep = "")) %>%
     select(-N) %>%
-    ggplot(aes(x = value))+geom_histogram()+
+    ggplot(aes(x = value))+geom_histogram(bins = 20)+
     geom_vline(aes(xintercept = ave), col = "red", linetype = 1)+
     geom_vline(aes(xintercept = ave-sd), col = "red", linetype = 2)+
     geom_vline(aes(xintercept = ave+sd), col = "red", linetype = 2)+
