@@ -13,7 +13,7 @@ ui <- function(request){
                   sidebarPanel(
                     # numeric variables
                     conditionalPanel(condition = "input.tabs1 == 'Numeric variables'",
-                                     uiOutput("vars_dist"),
+                                     uiOutput("vars_dist_ui"),
                                      # univariate transformation
                                      h4("Univariate transformation"),
                                      wellPanel(selectInput("typetrans", "Type of transformation",
@@ -32,8 +32,8 @@ ui <- function(request){
                                      # bining
                                      h4("Collapsing"),
                                      wellPanel(
-                                       uiOutput("vars_bin"),
-                                       uiOutput("levels"),
+                                       uiOutput("vars_bin_ui"),
+                                       uiOutput("levels_ui"),
                                        textInput("newcat", "Name of new category"),
                                        radioButtons("binned_type", "Type of new variable",
                                                     choices = list("nominal" = "factor",
@@ -42,7 +42,7 @@ ui <- function(request){
 
                     # panel for correlation input
                     conditionalPanel(condition = "input.tabs1=='Network Plot of Correlation and Association'" ,
-                                     uiOutput("vars_cor"),
+                                     uiOutput("vars_cor_ui"),
                                      # correlation threshold
                                      sliderInput("min_cor", "Minimum correlation shown", min = 0, max = 1, value = .3),
                                      # significance
@@ -53,7 +53,7 @@ ui <- function(request){
 
                     # panel for statistics input
                     conditionalPanel(condition = "input.tabs1=='Statistics'",
-                                     uiOutput("vars_stat")
+                                     uiOutput("vars_stat_ui")
                     ),
                     width = 2),
 
@@ -78,6 +78,17 @@ ui <- function(request){
                                 # data
                                 tabPanel("Data",
                                          DT::DTOutput("data")),
+
+                                # code recipe
+                                tabPanel(title = "Code",
+                                         h4("Reproducible code"),
+                                         p("Copy this code into your R script to reproduce the current data transformations."),
+                                         actionButton("copy_code", "Copy to clipboard",
+                                                      onclick = "Shiny.setInputValue('copy_code_click', Math.random());
+                                                                  var text = document.getElementById('code_recipe').innerText;
+                                                                  navigator.clipboard.writeText(text);"),
+                                         br(), br(),
+                                         verbatimTextOutput("code_recipe")),
 
                                 # check
                                 tabPanel(title = "Note",

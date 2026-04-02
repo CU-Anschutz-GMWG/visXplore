@@ -29,8 +29,11 @@ server_VisXplore <- function(data) {
                              df_new_num=NULL, new_type_num=NULL,
                              df_new_cat=NULL, new_type_cat=NULL)
 
+    # code recipe: accumulates reproducible R code for transformations
+    code_steps <- reactiveValues(lines = character(0))
+
     # numeric variable selector
-    output$vars_dist <- renderUI({
+    output$vars_dist_ui <- renderUI({
       num_names <- colnames(df_lst$df_all)[df_lst$var_type == "numeric"]
       checkboxGroupInput("vars_dist", "Numeric variables",
                          choices = num_names, selected = num_names)
@@ -48,32 +51,47 @@ server_VisXplore <- function(data) {
 
     ## transformations: univariate
     observeEvent(input$newtrans,
-                 {new_vars <- visx_transform(df_lst$df_all, input$vars_dist,
-                                             fun = input$typetrans)
+                 {fn <- match.fun(input$typetrans)
+                 new_vars <- as.data.frame(lapply(df_lst$df_all[, input$vars_dist, drop = FALSE], fn))
+                 colnames(new_vars) <- paste0(input$vars_dist, "_", input$typetrans)
                  df_lst$df_new_num <- bind_cols(df_lst$df_new_num, new_vars)
                  df_lst$new_type_num <- c(df_lst$new_type_num, rep("numeric", ncol(new_vars)))
                  df_lst$df_all <- bind_cols(df_lst$df_all, new_vars)
                  df_lst$var_type <- c(df_lst$var_type, rep("numeric", ncol(new_vars)))
+
+                 vars_str <- paste(input$vars_dist, collapse = ", ")
+                 new_names <- paste0(input$vars_dist, "_", input$typetrans)
+                 names_str <- paste0('.names = "{.col}_', input$typetrans, '"')
+                 code_steps$lines <- c(code_steps$lines,
+                   paste0('dplyr::mutate(dplyr::across(c(', vars_str, '), ', input$typetrans, ', ', names_str, '))'))
                  })
     ## transformation: multivariate
     observeEvent(input$newop,
-                 {if(input$typeop == "Mean"){
-                   new_vars <- visx_mean_vars(df_lst$df_all, input$vars_dist,
-                                              name = input$newvarname)
+                 {code_line <- NULL
+                 if(input$typeop == "Mean"){
+                   new_vars <- data.frame(rowMeans(df_lst$df_all[, input$vars_dist, drop = FALSE]))
+                   colnames(new_vars) <- input$newvarname
+                   vars_str <- paste(input$vars_dist, collapse = ", ")
+                   code_line <- paste0('dplyr::mutate(', input$newvarname,
+                                       ' = rowMeans(dplyr::pick(', vars_str, ')))')
                  }
                    if(input$typeop == "Ratio (alphabetical)"){
-                     new_vars <- visx_ratio(df_lst$df_all, input$vars_dist[1],
-                                            input$vars_dist[2], name = input$newvarname)
+                     new_vars <- data.frame(df_lst$df_all[[input$vars_dist[1]]] / df_lst$df_all[[input$vars_dist[2]]])
+                     colnames(new_vars) <- input$newvarname
+                     code_line <- paste0('dplyr::mutate(', input$newvarname,
+                                         ' = ', input$vars_dist[1], ' / ', input$vars_dist[2], ')')
                    }
                    if(input$typeop == "Ratio (reverse alphabetical)"){
-                     new_vars <- visx_ratio(df_lst$df_all, input$vars_dist[2],
-                                            input$vars_dist[1], name = input$newvarname)
+                     new_vars <- data.frame(df_lst$df_all[[input$vars_dist[2]]] / df_lst$df_all[[input$vars_dist[1]]])
+                     colnames(new_vars) <- input$newvarname
+                     code_line <- paste0('dplyr::mutate(', input$newvarname,
+                                         ' = ', input$vars_dist[2], ' / ', input$vars_dist[1], ')')
                    }
                    df_lst$df_new_num <- bind_cols(df_lst$df_new_num, new_vars)
                    df_lst$new_type_num <- c(df_lst$new_type_num, "numeric")
                    df_lst$df_all <- bind_cols(df_lst$df_all, new_vars)
                    df_lst$var_type <- c(df_lst$var_type, "numeric")
-
+                   code_steps$lines <- c(code_steps$lines, code_line)
                  })
 
     output$num_vars <- renderPlot({
@@ -90,11 +108,11 @@ server_VisXplore <- function(data) {
     },  height = 600, width = 1000)
 
     # categorical variable tab
-    output$vars_bin <- renderUI({
+    output$vars_bin_ui <- renderUI({
       selectInput("vars_bin", "Variable to collapse",
                   choices = colnames(df_lst$df_all)[df_lst$var_type!="numeric"])
     })
-    output$levels <- renderUI({
+    output$levels_ui <- renderUI({
       req(input$vars_bin)
       checkboxGroupInput("lev", "Levels to collapse",
                          choices = levels(as.factor(df_lst$df_all[[input$vars_bin]])))
@@ -109,6 +127,13 @@ server_VisXplore <- function(data) {
       df_lst$new_type_cat <- c(df_lst$new_type_cat, input$binned_type)
       df_lst$df_all <- bind_cols(df_lst$df_all, new_var)
       df_lst$var_type <- c(df_lst$var_type, input$binned_type)
+
+      levs_str <- paste0('c("', paste(input$lev, collapse = '", "'), '")')
+      new_col <- paste0(input$vars_bin, "_bin")
+      code_steps$lines <- c(code_steps$lines,
+        paste0('dplyr::mutate(', new_col,
+               ' = ifelse(', input$vars_bin, ' %in% ', levs_str,
+               ', "', input$newcat, '", ', input$vars_bin, '))'))
     })
 
     ## display original variables
@@ -126,7 +151,7 @@ server_VisXplore <- function(data) {
     }, height = 600, width = 1000)
 
     # correlation diagram panel
-    output$vars_cor <- renderUI({
+    output$vars_cor_ui <- renderUI({
       checkboxGroupInput("vars_cor", "Variables to visualise",
                          choices =  colnames(df_lst$df_all),
                          selected = colnames(df_lst$df_all))
@@ -179,7 +204,7 @@ server_VisXplore <- function(data) {
     })
 
 
-    output$vars_stat <- renderUI({
+    output$vars_stat_ui <- renderUI({
       checkboxGroupInput("vars_stat", "Variables to include",
                          choices = colnames(df_lst$df_all),
                          selected = colnames(df_lst$df_all))
@@ -215,6 +240,28 @@ server_VisXplore <- function(data) {
         kable_styling(full_width = F) %>%
         pack_rows(index = table(var_labs)) %>%
         scroll_box(width = "100%", height = "1000px")
+    })
+
+    # code recipe
+    output$code_recipe <- renderText({
+      steps <- code_steps$lines
+      if (length(steps) == 0) {
+        return(paste0(
+          "library(VisXplore)\n",
+          "df <- your_data\n\n",
+          "result <- pairwise_cor(df)\n",
+          "plot(result)"
+        ))
+      }
+      pipe <- paste0("  ", steps, " |>")
+      pipe[length(pipe)] <- sub(" \\|>$", "", pipe[length(pipe)])
+      paste0(
+        "library(VisXplore)\n",
+        "df <- your_data |>\n",
+        paste(pipe, collapse = "\n"),
+        "\n\nresult <- pairwise_cor(df)\n",
+        "plot(result)"
+      )
     })
 
     # session info

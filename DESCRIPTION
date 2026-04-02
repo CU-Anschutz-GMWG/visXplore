@@ -1,7 +1,7 @@
 Package: VisXplore
 Type: Package
 Title: Visual interactive model selection
-Version: 2.0.0
+Version: 2.1.0
 Authors@R: c(person("Ryan", "Peterson", email = "ryan-peterson@uiowa.edu", role = "cre"),
              person("Ying", "Jin", email = "ying.jin@cuanschutz.edu", role = "aut"),
              person("Carsten", "Goerg", email = "carsten.goerg@cuanschutz.edu", role = "aut"))
@@ -34,10 +34,11 @@ Imports:
     tidyr
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
-Suggests: 
+Suggests:
     golem,
     processx,
     rmarkdown,
+    shinytest2,
     testthat (>= 3.0.0),
     withr,
     devtools

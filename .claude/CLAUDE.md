@@ -51,9 +51,6 @@ All source is in `R/`:
 - **`helpers.R`** — `corstars()` for formatted correlation matrix with significance stars; `get_r2()` for R-squared/pseudo-R-squared per variable
 - **`npc_mixed_cor.R`** — Network plot visualization using MDS coordinates from the dissimilarity matrix, with dual color scales
 
-### Data Transformation Helpers
-- **`transforms.R`** — Standalone functions: `visx_transform()`, `visx_ratio()`, `visx_mean_vars()`, `visx_collapse_levels()`
-
 ### Shiny App
 - **`launch_VisXplore.R`** — `VisXplore()` entry point (plus deprecated `VisX()` alias)
 - **`ui_VisX.R`** — UI definition with tabs: Network Plot, Numeric/Categorical variables, Correlation matrix, Statistics, Data, Notes
@@ -76,5 +73,6 @@ GitHub Actions runs `R-CMD-check` on push/PR to master across macOS, Windows, an
 
 **Core**: `pairwise_cor()`, `npc_mixed_cor()`, `corstars()`, `get_r2()`, `data_check()`, `VisXplore()`
 **S3 methods**: `print/summary/plot/as.data.frame.visx_cor`, `print.visx_check`
-**Transforms**: `visx_transform()`, `visx_ratio()`, `visx_mean_vars()`, `visx_collapse_levels()`
 **Deprecated**: `VisX()` (use `VisXplore()` instead)
+
+Note: Data transformation helpers (`visx_transform`, `visx_ratio`, `visx_mean_vars`, `visx_collapse_levels`) are internal. The Shiny app uses them internally but the code recipe tab emits standard `dplyr::mutate()` calls for reproducibility.

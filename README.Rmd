@@ -97,28 +97,6 @@ df <- data.frame(x = rnorm(10), y = 1, z = NA)
 data_check(df)
 ```
 
-## Data transformations
-
-VisXplore provides helper functions for common preprocessing steps that return
-data frames ready to be column-bound with the original data:
-
-```{r transforms}
-df <- data.frame(a = exp(1:5), b = (1:5)^2, c = 11:15)
-
-# Log or sqrt transform
-visx_transform(df, c("a", "b"), fun = "log")
-
-# Compute a ratio of two columns
-visx_ratio(df, "a", "b")
-
-# Row-wise mean across columns
-visx_mean_vars(df, c("a", "b", "c"))
-
-# Collapse factor levels
-colors <- data.frame(color = c("red", "blue", "green", "red", "blue"))
-visx_collapse_levels(colors, "color", c("red", "blue"), "warm_cool")
-```
-
 ## Interactive Shiny app
 
 For point-and-click exploration, launch the built-in Shiny app. It provides

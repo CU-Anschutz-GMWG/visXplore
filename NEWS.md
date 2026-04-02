@@ -1,4 +1,35 @@
 
+# VisXplore 2.1.0
+
+## Shiny app improvements
+- Variable checkboxes now filter the network plot, correlation matrix, and statistics tabs reactively
+- Significance radio buttons now work correctly (fixed string-to-numeric conversion)
+- Statistics tab handles both all-numeric (VIF) and mixed-type (GVIF) data
+- Added variable checkbox panel to the Statistics tab for interactive feature selection
+- Fixed crash on launch caused by lazy evaluation of the `data` argument
+- Clear error message when calling `VisXplore()` without data
+- Fixed `xtfrm` / "undefined columns selected" errors on the Categorical variables tab
+- Suppressed `stat_bin()` warning by setting explicit bin count in histograms
+- Fixed duplicate HTML element IDs between `uiOutput` containers and their inputs
+
+## Code recipe tab
+- New "Code" tab in the Shiny app accumulates a reproducible R pipeline as users apply transformations
+- Recipe emits standard `dplyr::mutate()` calls (not package-specific wrappers), so the output is portable
+- Includes a "Copy to clipboard" button
+
+## API simplification
+- Removed exported transform helpers: `visx_transform()`, `visx_ratio()`, `visx_mean_vars()`, `visx_collapse_levels()`
+- Users should use `dplyr::mutate()` for preprocessing before passing data to `pairwise_cor()`
+- The Shiny app's Code tab generates the equivalent `dplyr` code automatically
+
+## plot.visx_cor fix
+- `plot()` on a `visx_cor` object now displays the plot (previously returned invisibly without rendering)
+
+## Testing
+- Added `testServer()` tests for Shiny reactive logic (transformations, code recipe, variable filtering, significance)
+- Added `shinytest2` integration smoke test
+- Added `shinytest2` to Suggests
+
 # VisXplore 2.0.0
 
 ## Package renamed: VisX → VisXplore

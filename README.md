@@ -131,52 +131,6 @@ data_check(df)
 #> Warning: y with same value for all observations
 ```
 
-## Data transformations
-
-VisXplore provides helper functions for common preprocessing steps that
-return data frames ready to be column-bound with the original data:
-
-``` r
-df <- data.frame(a = exp(1:5), b = (1:5)^2, c = 11:15)
-
-# Log or sqrt transform
-visx_transform(df, c("a", "b"), fun = "log")
-#>   a_log    b_log
-#> 1     1 0.000000
-#> 2     2 1.386294
-#> 3     3 2.197225
-#> 4     4 2.772589
-#> 5     5 3.218876
-
-# Compute a ratio of two columns
-visx_ratio(df, "a", "b")
-#>   a_over_b
-#> 1 2.718282
-#> 2 1.847264
-#> 3 2.231726
-#> 4 3.412384
-#> 5 5.936526
-
-# Row-wise mean across columns
-visx_mean_vars(df, c("a", "b", "c"))
-#>    mean_var
-#> 1  4.906094
-#> 2  7.796352
-#> 3 14.028512
-#> 4 28.199383
-#> 5 62.804386
-
-# Collapse factor levels
-colors <- data.frame(color = c("red", "blue", "green", "red", "blue"))
-visx_collapse_levels(colors, "color", c("red", "blue"), "warm_cool")
-#>   color_bin
-#> 1 warm_cool
-#> 2 warm_cool
-#> 3     green
-#> 4 warm_cool
-#> 5 warm_cool
-```
-
 ## Interactive Shiny app
 
 For point-and-click exploration, launch the built-in Shiny app. It
