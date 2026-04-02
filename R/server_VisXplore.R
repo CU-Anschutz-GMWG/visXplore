@@ -1,6 +1,7 @@
 #' @import shiny
 #' @import dplyr
 #' @import ggplot2
+#' @importFrom DT DTOutput renderDT
 #' @importFrom janitor clean_names
 #' @importFrom fastDummies dummy_cols
 #' @importFrom kableExtra kable

@@ -100,11 +100,15 @@ test_that("pseudoR2 matches manual multinom computation", {
   df <- data.frame(x = rnorm(100), y = factor(sample(c("a", "b"), 100, TRUE)))
   result <- pair_cor(df, c("numeric", "factor"))
 
-  # Reproduce manually — use multinom() (not nnet::multinom) so PseudoR2
-  # can reconstruct the null model call; model = TRUE stores data
+  # Reproduce manually using Nagelkerke's formula
   fit <- multinom(y ~ x, data = df, model = TRUE, trace = FALSE)
-  ref_r2 <- sqrt(DescTools::PseudoR2(fit, which = "Nagelkerke"))
-  expect_equal(unname(result$cor_value), unname(ref_r2), tolerance = 1e-6)
+  null_fit <- multinom(y ~ 1, data = df, model = TRUE, trace = FALSE)
+  n <- nrow(df)
+  ll_full <- as.numeric(logLik(fit))
+  ll_null <- as.numeric(logLik(null_fit))
+  cox_snell <- 1 - exp((2 / n) * (ll_null - ll_full))
+  ref_r2 <- sqrt(cox_snell / (1 - exp((2 / n) * ll_null)))
+  expect_equal(unname(result$cor_value), ref_r2, tolerance = 1e-6)
 })
 
 test_that("Spearman correlation in pairwise_cor matches cor()", {

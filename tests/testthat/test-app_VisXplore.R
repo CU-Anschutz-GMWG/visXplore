@@ -2,6 +2,8 @@
 #### UI functions #####
 
 test_that("UI function", {
+  skip_if_not_installed("golem")
+  skip_if_not_installed("DT")
   golem::expect_shinytaglist(ui())
 })
 

@@ -63,7 +63,6 @@ corstars <-function(cor_value, cor_p, var_type){
 #' @param df data frame
 #' @param type type corresponding to columns in df
 #'
-#' @importFrom DescTools PseudoR2
 #'
 #' @return A vector with values of R squared of each variable
 #' @export
@@ -90,8 +89,9 @@ get_r2 <- function(df, type) {
     # factor
     else if(type[i] == "factor"){
       mult_fit <- multinom(f, data = df_work, model = T, trace = FALSE)
-      r2[i] <- PseudoR2(mult_fit, which = "Nagelkerke")
-
+      f_null <- as.formula(paste(vars[i], "~ 1"))
+      null_fit <- multinom(f_null, data = df_work, model = T, trace = FALSE)
+      r2[i] <- nagelkerke_r2(mult_fit, null_fit)
     }
     # ordinal — convert to numeric for lm, but only in a temporary copy
     else if(type[i] == "ordinal"){

@@ -20,7 +20,6 @@
 #'
 #' ordinal vs ordinal or numeric: GK gamma and GK gamma correlation test
 #'
-#' @importFrom DescTools PseudoR2
 #' @importFrom car Anova
 #' @importFrom MESS gkgamma
 #'
@@ -43,16 +42,15 @@ pair_cor <- function(df, type){
   if("factor" %in% type){
     # multinomial regression
     varnames <- colnames(df)
-    f <- ifelse(length(unique(df[, 1])) <=  length(unique(df[, 2])),
-                paste(varnames[1], "~", varnames[2]),
-                paste(varnames[2], "~", varnames[1]))
-    f <- as.formula(f)
+    resp_idx <- ifelse(length(unique(df[, 1])) <= length(unique(df[, 2])), 1, 2)
+    f <- as.formula(paste(varnames[resp_idx], "~", varnames[3 - resp_idx]))
+    f_null <- as.formula(paste(varnames[resp_idx], "~ 1"))
     mult_fit <- try(multinom(f, data = df, model = T, trace = FALSE), silent = TRUE)
     cor_type <- "pseudoR2"
 
     if(!("try-error" %in% class(mult_fit)) ) {
-      cor_value <- PseudoR2(mult_fit, which = "Nagelkerke")
-      cor_value <- sqrt(cor_value)
+      null_fit <- multinom(f_null, data = df, model = T, trace = FALSE)
+      cor_value <- sqrt(nagelkerke_r2(mult_fit, null_fit))
       discard <- capture.output(cor_p <- Anova(mult_fit, trace = FALSE)$`Pr(>Chisq)`)
     } else if (all(df[,1] == df[,2])) {
       cor_value <- 1
@@ -107,8 +105,7 @@ pair_cor <- function(df, type){
 #' numeric vs numeric: Spearman correlation and p value
 #'
 #' @importFrom Hmisc rcorr
-#' @import nnet
-#' @importFrom DescTools PseudoR2
+#' @importFrom nnet multinom
 #' @importFrom car Anova
 #' @importFrom MESS gkgamma
 #' @importFrom janitor clean_names

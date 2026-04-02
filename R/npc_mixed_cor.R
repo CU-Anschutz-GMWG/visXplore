@@ -13,7 +13,6 @@
 #' @return A ggplot network plot of association
 #'
 #' @importFrom Hmisc rcorr
-#' @importFrom DescTools PseudoR2
 #' @importFrom car Anova
 #' @importFrom MESS gkgamma
 #' @import ggplot2

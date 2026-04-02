@@ -2,8 +2,8 @@ Package: VisXplore
 Type: Package
 Title: Visual interactive model selection
 Version: 2.0.0
-Authors@R: c(person("Ying", "Jin", email = "ying.jin@cuanschutz.edu", role = "cre"),
-             person("Ryan", "Peterson", email = "ryan.a.peterson@cuanschutz.edu", role = "aut"),
+Authors@R: c(person("Ryan", "Peterson", email = "ryan-peterson@uiowa.edu", role = "cre"),
+             person("Ying", "Jin", email = "ying.jin@cuanschutz.edu", role = "aut"),
              person("Carsten", "Goerg", email = "carsten.goerg@cuanschutz.edu", role = "aut"))
 Maintainer: Ying Jin <ying.jin@cuanschutz.edu>
 Description: An accessible, user-friendly, interactive software application for 
@@ -12,10 +12,10 @@ Description: An accessible, user-friendly, interactive software application for
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
-Imports: 
+Imports:
     car,
-    DescTools,
     dplyr,
+    DT,
     fastDummies,
     ggplot2,
     ggnewscale,
@@ -25,6 +25,7 @@ Imports:
     kableExtra,
     knitr,
     MESS,
+    nnet,
     readr,
     rlang,
     shiny,
@@ -32,7 +33,6 @@ Imports:
     stringr,
     tibble,
     tidyr
-Depends: nnet
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Suggests: 
