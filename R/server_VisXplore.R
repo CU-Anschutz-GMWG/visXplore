@@ -16,7 +16,7 @@
 #' @importFrom tidyr pivot_longer
 #' @importFrom utils write.csv
 
-server_VisX <- function(data) {
+server_VisXplore <- function(data) {
   server <- function(input, output, session){
 
     # upload data
@@ -31,16 +31,16 @@ server_VisX <- function(data) {
     output$data <- DT::renderDT({bl_df() %>% clean_names(case = "none")},
                                    options = list(pageLength=10,
                                                   scrollX = T))
-    output$datacheck <- renderText({data_check(bl_df())})
+    output$datacheck <- renderText({
+      check <- data_check(bl_df())
+      format_check_html(check)
+    })
 
 
     ## transformations: univariate
     observeEvent(input$newtrans,
-                 {new_vars <- df_lst$df_all %>%
-                   mutate(across(all_of(input$vars_dist),
-                                 .fns = as.formula(paste("~",input$typetrans, "(.x)")),
-                                 .names = paste("{col}_", input$typetrans, sep = '')),
-                          .keep = "none")
+                 {new_vars <- visx_transform(df_lst$df_all, input$vars_dist,
+                                             fun = input$typetrans)
                  df_lst$df_new_num <- bind_cols(df_lst$df_new_num, new_vars)
                  df_lst$new_type_num <- c(df_lst$new_type_num, rep("numeric", ncol(new_vars)))
                  df_lst$df_all <- bind_cols(df_lst$df_all, new_vars)
@@ -49,16 +49,17 @@ server_VisX <- function(data) {
     ## transformation: multivariate
     observeEvent(input$newop,
                  {if(input$typeop == "Mean"){
-                   new_vars = apply(df_lst$df_all[, input$vars_dist], 1, mean)
-                   new_vars = data.frame(new_vars)
+                   new_vars <- visx_mean_vars(df_lst$df_all, input$vars_dist,
+                                              name = input$newvarname)
                  }
                    if(input$typeop == "Ratio (alphabetical)"){
-                     new_vars = df_lst$df_all[input$vars_dist[1]]/df_lst$df_all[input$vars_dist[2]]
+                     new_vars <- visx_ratio(df_lst$df_all, input$vars_dist[1],
+                                            input$vars_dist[2], name = input$newvarname)
                    }
                    if(input$typeop == "Ratio (reverse alphabetical)"){
-                     new_vars = df_lst$df_all[input$vars_dist[2]]/df_lst$df_all[input$vars_dist[1]]
+                     new_vars <- visx_ratio(df_lst$df_all, input$vars_dist[2],
+                                            input$vars_dist[1], name = input$newvarname)
                    }
-                   colnames(new_vars) <- input$newvarname
                    df_lst$df_new_num <- bind_cols(df_lst$df_new_num, new_vars)
                    df_lst$new_type_num <- c(df_lst$new_type_num, "numeric")
                    df_lst$df_all <- bind_cols(df_lst$df_all, new_vars)
@@ -70,7 +71,7 @@ server_VisX <- function(data) {
       df_plot <- df_lst$df_all[, df_lst$var_type=="numeric"]
 
       if(nrow(df_plot)>0){
-        df_plot <- mutate_all(df_plot, as.numeric)
+        df_plot <- mutate(df_plot, across(everything(), as.numeric))
         make_hist(df_plot)
       }
       else{
@@ -100,11 +101,11 @@ server_VisX <- function(data) {
       df_lst$var_type <- c(df_lst$var_type, input$binned_type)
     })
 
-    ## disaplay original variables
+    ## display original variables
     output$cat_vars <- renderPlot({
       if(any(df_lst$var_type != "numeric")){
         df_plot <- df_lst$df_all[, df_lst$var_type!="numeric",drop = FALSE]
-        df_plot <- mutate_all(df_plot, as.character)
+        df_plot <- mutate(df_plot, across(everything(), as.character))
         make_bar(df_plot)
       }
       else{
@@ -161,7 +162,8 @@ server_VisX <- function(data) {
     output$stat <- renderText({
       # inter-correlation statistics
       df_vif <- mutate(df_lst$df_all, y=rnorm(nrow(df_lst$df_all)))
-      df_vif <- mutate_at(df_vif, which(df_lst$var_type!="numeric"), as.factor)
+      non_num_idx <- which(df_lst$var_type != "numeric")
+      df_vif <- mutate(df_vif, across(all_of(non_num_idx), as.factor))
       vifs <- round(vif(lm(y ~ ., data = df_vif)), 2)
       r2 <- get_r2(df_lst$df_all, df_lst$var_type)
       r2 <- round(r2, 2)
@@ -183,6 +185,3 @@ server_VisX <- function(data) {
 
   }
 }
-
-
-

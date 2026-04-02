@@ -2,21 +2,31 @@
 % Please edit documentation in R/dissimilarity.R
 \name{pairwise_cor}
 \alias{pairwise_cor}
-\title{Calculate pariwise association of data with mixed types of variables}
+\title{Calculate pairwise association of data with mixed types of variables}
 \usage{
 pairwise_cor(df, var_type = NULL)
 }
 \arguments{
 \item{df}{dataframe with mixed types of variables}
 
-\item{var_type}{a charater vector corresponding to types of variables in df
-if not provided, will guess.}
+\item{var_type}{a character vector corresponding to types of variables in df.
+If not provided, will guess based on column classes.}
 }
 \value{
-matrices with measures, types and p values of association
+A \code{visx_cor} object (S3 class) containing:
+\describe{
+  \item{cor_value}{numeric matrix of pairwise association values}
+  \item{cor_type}{character matrix of association types (spearman, pseudoR2, GKgamma)}
+  \item{cor_p}{numeric matrix of p-values}
+  \item{var_type}{character/factor vector of variable types}
+  \item{data}{the original data.frame}
+}
+
+Use \code{print()}, \code{summary()}, \code{plot()}, and \code{as.data.frame()}
+methods on the result.
 }
 \description{
-Calculate pariwise association of data with mixed types of variables
+Calculate pairwise association of data with mixed types of variables
 }
 \details{
 The following associated measures and tests are implemented dependent on variable type:
@@ -32,6 +42,8 @@ data1 <- data.frame(x = rnorm(10),
  y = rbinom(10, 1, 0.5),
 z = rbinom(10, 5, 0.5))
 type1 <- c("numeric", "factor", "ordinal")
-pairwise_cor(data1, type1)
+result <- pairwise_cor(data1, type1)
+result
+summary(result)
 
 }

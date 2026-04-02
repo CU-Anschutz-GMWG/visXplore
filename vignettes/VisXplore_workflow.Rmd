@@ -1,8 +1,8 @@
 ---
-title: "VisX workflow"
+title: "VisXplore workflow"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{VisX workflow}
+  %\VignetteIndexEntry{VisXplore workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -21,11 +21,11 @@ data("mtcars")
 
 # Introduction 
 
-The VisX application includes five tabs, supporting operations of data pre-processing or variable selection. Each tab consists of an input panel on the left side and an output panel on the right side. In the following sections, we will illustrate the VisX workflow using "mtcars" data as an example. This data is a built-in data set of R and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973--74 models). A more detailed description of this data can be found at https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html. 
+The VisXplore application includes five tabs, supporting operations of data pre-processing or variable selection. Each tab consists of an input panel on the left side and an output panel on the right side. In the following sections, we will illustrate the VisXploreplore workflow using "mtcars" data as an example. This data is a built-in data set of R and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973--74 models). A more detailed description of this data can be found at https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html. 
 
 # Upload and initialization
 
-The data tab, which is the first tab of VisX, allows user to upload data file from local directory and initializing variable sets for following analysis. The app currently supports only csv files. 
+The data tab, which is the first tab of VisXplore, allows user to upload data file from local directory and initializing variable sets for following analysis. The app currently supports only csv files. 
 
 ```{r, echo=FALSE, out.width = '100%', fig.cap="Upload"}
 knitr::include_graphics("tab1-1.png")
@@ -37,7 +37,7 @@ After data is uploaded, a preview will appear reactively in the output panel. On
 knitr::include_graphics("tab1-2.png")
 ```
 
-If the dataset includes variables with no variation or all missing values, this will cause failure in the calculation of correlation and association measures. VisX will detect these columns and issue warnings below data preview as follows. In this case, the best practice is to remove such columns.
+If the dataset includes variables with no variation or all missing values, this will cause failure in the calculation of correlation and association measures. VisXplore will detect these columns and issue warnings below data preview as follows. In this case, the best practice is to remove such columns.
 
 ```{r, echo=FALSE, out.width = '100%', fig.cap="Warning messages. fake_col and fake_col2 are fake variables created for demonstration."}
 knitr::include_graphics("tab1-3.png")
@@ -61,7 +61,7 @@ For a single numeric variables, this tab supports log and square-root transforma
 knitr::include_graphics("tab2-2.png")
 ```
 
-After clicking the "Transform variable(s)" button, histograms of new variables will show up reactively on the right side, below original variables. VisX will name the new variable by adding the type of transformation after the original variable names (e.g. disp_log). 
+After clicking the "Transform variable(s)" button, histograms of new variables will show up reactively on the right side, below original variables. VisXplore will name the new variable by adding the type of transformation after the original variable names (e.g. disp_log). 
 
 ```{r, echo=FALSE, out.width="80%", fig.align='center'}
 knitr::include_graphics("tab2-3.png")
@@ -106,7 +106,7 @@ knitr::include_graphics("tab3-2.png")
 ```
 
 
-By clicking the "Update" button, the new variable is created and its barplot appears below the original barplots. VisX names the new variable automatically by attaching "bin" after the original variable name. 
+By clicking the "Update" button, the new variable is created and its barplot appears below the original barplots. VisXplore names the new variable automatically by attaching "bin" after the original variable name. 
 
 ```{r, echo=FALSE, out.width="80%", fig.align='center'}
 knitr::include_graphics("tab3-3.png")
@@ -120,7 +120,7 @@ Below is an example of dichotomizing the "wt" (weight) variable into "heavy" and
 knitr::include_graphics("tab3-4.png")
 ```
 
-By clicking the "Creat variable" button, the new variable is created and its barplot appears below the original barplots. VisX names the new variable automatically by attaching "bi" after the original variable name. 
+By clicking the "Creat variable" button, the new variable is created and its barplot appears below the original barplots. VisXplore names the new variable automatically by attaching "bi" after the original variable name. 
 
 ```{r, echo=FALSE, out.width="80%", fig.align='center'}
 knitr::include_graphics("tab3-5.png")
@@ -174,7 +174,7 @@ knitr::include_graphics("tab6-1.png")
 
 # Bookmark and interative use
 
-VisX support interative operation across panels, meaning users can go back to previous panels and do more operations without overriding previous operations (except for the data panel, where re-initialization may overide previous operations). In addition, VisX also supports reproducing results when running on the same server. By clicking "Bookmark" at the bottom in left input panel, a bookmark link is generated, which the user an later open in the browser and retrieve where the app is left. 
+VisXplore supports interative operation across panels, meaning users can go back to previous panels and do more operations without overriding previous operations (except for the data panel, where re-initialization may overide previous operations). In addition, VisXplore also supports reproducing results when running on the same server. By clicking "Bookmark" at the bottom in left input panel, a bookmark link is generated, which the user an later open in the browser and retrieve where the app is left. 
 
 
 

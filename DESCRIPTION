@@ -1,7 +1,7 @@
-Package: VisX
+Package: VisXplore
 Type: Package
 Title: Visual interactive model selection
-Version: 1.0.0.9000
+Version: 2.0.0
 Authors@R: c(person("Ying", "Jin", email = "ying.jin@cuanschutz.edu", role = "cre"),
              person("Ryan", "Peterson", email = "ryan.a.peterson@cuanschutz.edu", role = "aut"),
              person("Carsten", "Goerg", email = "carsten.goerg@cuanschutz.edu", role = "aut"))
@@ -33,7 +33,7 @@ Imports:
     tibble,
     tidyr
 Depends: nnet
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Suggests: 
     golem,
@@ -42,4 +42,4 @@ Suggests:
     testthat (>= 3.0.0),
     withr,
     devtools
-URL: https://yingljin.github.io/VisX/
+URL: https://CU-Anschutz-GMWG.github.io/VisXplore/

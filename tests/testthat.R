@@ -1,4 +1,4 @@
 library(testthat)
-library(VisX)
+library(VisXplore)
 
-test_check("VisX")
+test_check("VisXplore")

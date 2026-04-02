@@ -17,6 +17,6 @@ This functions generates histograms and marks out mean and
 one standard deviation band around the mean for each numeric variable
 }
 \details{
-This function only run internally in VisX application because it depends on
+This function only run internally in VisXplore application because it depends on
  reactive values from user input
 }

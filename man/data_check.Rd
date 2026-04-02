@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_check.R
 \name{data_check}
 \alias{data_check}
-\title{Check for columns that are empty/identical}
+\title{Check for columns that are empty or identical}
 \usage{
 data_check(df)
 }
@@ -10,8 +10,19 @@ data_check(df)
 \item{df}{dataframe to check}
 }
 \value{
-a warning message if there exists empty columns or columns with no variation in the data
+A \code{visx_check} object with:
+\describe{
+  \item{empty_cols}{character vector of column names that are entirely missing}
+  \item{zero_var_cols}{character vector of column names with no variation}
+  \item{ok}{logical, TRUE if no issues found}
+}
 }
 \description{
-Check for columns that are empty/identical
+Check for columns that are empty or identical
+}
+\examples{
+df <- data.frame(x = rnorm(10), y = 1, z = NA)
+result <- data_check(df)
+result
+
 }

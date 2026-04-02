@@ -58,7 +58,10 @@ pair_cor <- function(df, type){
       cor_value <- 1
       cor_p <- NA
     } else {
-      cor_value <- 1
+      warning("Could not compute association between ",
+              colnames(df)[1], " and ", colnames(df)[2],
+              ". Returning NA.")
+      cor_value <- NA
       cor_p <- NA
     }
 
@@ -77,13 +80,23 @@ pair_cor <- function(df, type){
 
 ##### pairwise association #####
 
-#' Calculate pariwise association of data with mixed types of variables
+#' Calculate pairwise association of data with mixed types of variables
 #'
 #' @param df dataframe with mixed types of variables
-#' @param var_type a charater vector corresponding to types of variables in df
-#'  if not provided, will guess.
+#' @param var_type a character vector corresponding to types of variables in df.
+#'  If not provided, will guess based on column classes.
 #'
-#' @return matrices with measures, types and p values of association
+#' @return A \code{visx_cor} object (S3 class) containing:
+#' \describe{
+#'   \item{cor_value}{numeric matrix of pairwise association values}
+#'   \item{cor_type}{character matrix of association types (spearman, pseudoR2, GKgamma)}
+#'   \item{cor_p}{numeric matrix of p-values}
+#'   \item{var_type}{character/factor vector of variable types}
+#'   \item{data}{the original data.frame}
+#' }
+#'
+#' Use \code{print()}, \code{summary()}, \code{plot()}, and \code{as.data.frame()}
+#' methods on the result.
 #'
 #' @details The following associated measures and tests are implemented dependent on variable type:
 #'
@@ -107,7 +120,9 @@ pair_cor <- function(df, type){
 #'  y = rbinom(10, 1, 0.5),
 #' z = rbinom(10, 5, 0.5))
 #' type1 <- c("numeric", "factor", "ordinal")
-#' pairwise_cor(data1, type1)
+#' result <- pairwise_cor(data1, type1)
+#' result
+#' summary(result)
 #'
 pairwise_cor <- function(df, var_type = NULL){
 
@@ -118,7 +133,6 @@ pairwise_cor <- function(df, var_type = NULL){
                     levels = c("numeric", "integer", "factor", "character", "logical", "NULL"),
                     labels = c("numeric", "numeric", "factor", "factor", "factor", "factor"))
   }
-
 
   # set-up
   p <- ncol(df)
@@ -135,27 +149,42 @@ pairwise_cor <- function(df, var_type = NULL){
   colnames(cor_p_mat) <- rownames(cor_p_mat) <- colnames(df)
 
   # calculate correlation
-  ## numeric variables alone
-  if(!is.null(id_num) & length(id_num!=0)){
-    num_cor <-  rcorr(as.matrix(df[, id_num]), type = "spearman")
+  ## numeric variables alone (Spearman)
+  if(length(id_num) > 1){
+    num_cor <- rcorr(as.matrix(df[, id_num]), type = "spearman")
     cor_value_mat[id_num, id_num] <- num_cor$r
     cor_p_mat[id_num, id_num] <- num_cor$P
     cor_type_mat[id_num, id_num] <- "spearman"
+  } else if(length(id_num) == 1){
+    # Single numeric: diagonal is 1, no Spearman to compute
+    cor_value_mat[id_num, id_num] <- 1
+    cor_type_mat[id_num, id_num] <- "spearman"
   }
 
-  ## other types
-  if(!is.null(id_non_num)){
-    for(i in  1:p){
-      for(j in id_non_num){
-        this_cor <- pair_cor(df[, c(i, j)], var_type[c(i, j)])
-        cor_value_mat[i, j] <- cor_value_mat[j, i] <- this_cor$cor_value
-        cor_type_mat[i, j] <- cor_type_mat[j, i] <- this_cor$cor_type
-        cor_p_mat[i, j] <- cor_p_mat[j, i] <- this_cor$cor_p
-      }
+  ## non-numeric pairs: iterate only unique pairs involving at least one non-numeric
+  if(length(id_non_num) > 0){
+    # Build unique pairs (i < j) where at least one is non-numeric
+    all_pairs <- which(upper.tri(cor_value_mat), arr.ind = TRUE)
+    needs_pair_cor <- apply(all_pairs, 1, function(idx) {
+      any(idx %in% id_non_num)
+    })
+    non_num_pairs <- all_pairs[needs_pair_cor, , drop = FALSE]
+
+    for(k in seq_len(nrow(non_num_pairs))){
+      i <- non_num_pairs[k, 1]
+      j <- non_num_pairs[k, 2]
+      this_cor <- pair_cor(df[, c(i, j)], var_type[c(i, j)])
+      cor_value_mat[i, j] <- cor_value_mat[j, i] <- this_cor$cor_value
+      cor_type_mat[i, j] <- cor_type_mat[j, i] <- this_cor$cor_type
+      cor_p_mat[i, j] <- cor_p_mat[j, i] <- this_cor$cor_p
+    }
+
+    # Fill diagonal for non-numeric variables
+    for(j in id_non_num){
+      cor_value_mat[j, j] <- 1
+      cor_type_mat[j, j] <- if(var_type[j] == "factor") "pseudoR2" else "GKgamma"
     }
   }
 
-  return(list(cor_value = cor_value_mat, cor_type = cor_type_mat, cor_p = cor_p_mat, var_type = var_type))
+  new_visx_cor(cor_value_mat, cor_type_mat, cor_p_mat, var_type, data = df)
 }
-
-

@@ -13,9 +13,9 @@
 #' @export
 #' @examples
 #' data(mtcars)
-#' library(VisX)
+#' library(VisXplore)
 #' types <- rep("numeric", ncol(mtcars))
-#' test <- VisX::pairwise_cor(mtcars, types)
+#' test <- VisXplore::pairwise_cor(mtcars, types)
 #' type <- c("numeric", "factor",  rep("numeric", 5), rep("factor", 2), rep("ordinal", 2))
 #' corstars(test$cor_value, test$cor_p, type)
 #'
@@ -66,34 +66,38 @@ corstars <-function(cor_value, cor_p, var_type){
 #' @importFrom DescTools PseudoR2
 #'
 #' @return A vector with values of R squared of each variable
+#' @export
 #'
 #' @examples
 #' df <- data.frame(X1 = rnorm(100), X2 = rnorm(100), X3 = rnorm(100))
 #' \dontrun{
-#' get_r2j(df, rep("numeric", 3))
+#' get_r2(df, rep("numeric", 3))
 #' }
 
 get_r2 <- function(df, type) {
 
   r2 <- numeric(ncol(df))
   vars <- colnames(df)
+  # Work on a local copy so ordinal conversion doesn't affect subsequent iterations
+  df_work <- df
   for(i in seq_along(r2)){
     # formula
     f <- as.formula(paste(vars[i], "~ ."))
     # numeric
     if(type[i] == "numeric"){
-      r2[i] <- summary(lm(f, df))$r.squared
+      r2[i] <- summary(lm(f, df_work))$r.squared
     }
     # factor
     else if(type[i] == "factor"){
-      mult_fit <- multinom(f, data = df, model = T, trace = FALSE)
+      mult_fit <- multinom(f, data = df_work, model = T, trace = FALSE)
       r2[i] <- PseudoR2(mult_fit, which = "Nagelkerke")
 
     }
-    # ordinal
+    # ordinal — convert to numeric for lm, but only in a temporary copy
     else if(type[i] == "ordinal"){
-      df[, i] <- as.numeric(as.factor(df[, i]))
-      r2[i] <- summary(lm(f, df))$r.squared
+      df_tmp <- df_work
+      df_tmp[, i] <- as.numeric(as.factor(df_tmp[, i]))
+      r2[i] <- summary(lm(f, df_tmp))$r.squared
     }
   }
 

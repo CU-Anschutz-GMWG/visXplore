@@ -16,6 +16,6 @@ Barplots in categorical variable tab
 This functions generates barplots for each categorical variable
 }
 \details{
-This function only run internally in VisX application because it depends on
+This function only run internally in VisXplore application because it depends on
  reactive values from user input
 }

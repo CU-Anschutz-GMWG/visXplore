@@ -16,7 +16,7 @@ npc_mixed_cor(
 )
 }
 \arguments{
-\item{cor_results}{a list from pairwise_cor output}
+\item{cor_results}{a visx_cor object or list from pairwise_cor output}
 
 \item{sig.level}{maximum significance to be visualized}
 
@@ -24,7 +24,7 @@ npc_mixed_cor(
 
 \item{show_signif}{whether or not to visualize significance of association}
 
-\item{legend}{if TURE, how legend}
+\item{legend}{if TRUE, show legend}
 
 \item{repel}{if TRUE, text labels of variable names repel each other}
 
@@ -33,7 +33,7 @@ npc_mixed_cor(
 \item{overlay}{if TRUE, only show significant association above min_cor threshold}
 }
 \value{
-A network plot of association
+A ggplot network plot of association
 }
 \description{
 Network Plot of Association

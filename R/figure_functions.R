@@ -4,7 +4,7 @@
 #' Visualize numeric variables
 #' @description This functions generates histograms and marks out mean and
 #' one standard deviation band around the mean for each numeric variable
-#' @details This function only run internally in VisX application because it depends on
+#' @details This function only run internally in VisXplore application because it depends on
 #'  reactive values from user input
 #'
 #' @param df_hist A wide-format data include all numeric variables to visualize
@@ -36,7 +36,7 @@ make_hist <- function(df_hist){
 
 #' Visualize categorical variables
 #' @description This functions generates barplots for each categorical variable
-#' @details This function only run internally in VisX application because it depends on
+#' @details This function only run internally in VisXplore application because it depends on
 #'  reactive values from user input
 #'
 #' @param df_bar A wide-format data include all categorical variables to visualize
@@ -52,7 +52,7 @@ make_bar <- function(df_bar){
     mutate(N = sum(!is.na(value))) %>%
     mutate(name = paste(name, " (N = ", N, ")", sep = "")) %>%
     select(-N) %>%
-    ggplot(aes(x = value))+geom_histogram(stat = "count")+
+    ggplot(aes(x = value))+geom_bar()+
     facet_wrap(~name, scales = "free_x")+
     theme(axis.text.x = element_text(angle = 60, vjust = 0.5),
           strip.text = element_text(size = 10))
