@@ -51,7 +51,7 @@
 </h1></div>
 <!-- badges: start -->
 
-<p>VisXplore provides dynamic, interactive visualization of the distribution and correlation/association structure of multi-dimensional data. It supports real-time data preprocessing and presents important information for variable selection.</p>
+<p>VisXplore is an R package for interactive data preprocessing and variable selection across mixed variable types. It computes pairwise correlations and associations for numeric, nominal (factor), and ordinal variables and visualizes the results as a network plot. It supports real-time data preprocessing and presents important information for variable selection.</p>
 <p>VisXplore offers both a <strong>code-forward S3 API</strong> for use in R scripts and notebooks, and an optional <strong>Shiny app</strong> for interactive exploration.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -62,19 +62,152 @@
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/install-deprecated.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"CU-Anschutz-GMWG/VisXplore"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+<h2 id="pairwise-association">Pairwise association<a class="anchor" aria-label="anchor" href="#pairwise-association"></a>
 </h2>
-<p>Use the programmatic API:</p>
+<p>The core function <code><a href="reference/pairwise_cor.html">pairwise_cor()</a></code> computes a pairwise association matrix for all variables in a data frame. The association measure depends on the variable types involved:</p>
+<table class="table">
+<colgroup>
+<col width="40%">
+<col width="59%">
+</colgroup>
+<thead><tr class="header">
+<th>Variable pair</th>
+<th>Measure</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Numeric vs. numeric</td>
+<td>Spearman rho</td>
+</tr>
+<tr class="even">
+<td>Factor vs. any</td>
+<td>Pseudo R-squared (multinomial regression)</td>
+</tr>
+<tr class="odd">
+<td>Ordinal vs. ordinal/numeric</td>
+<td>Goodman-Kruskal gamma</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://CU-Anschutz-GMWG.github.io/VisXplore/">VisXplore</a></span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pairwise_cor.html">pairwise_cor</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span>
 <span><span class="va">result</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
-<p>Or launch the interactive Shiny app:</p>
+<span><span class="co">#&gt; Pairwise associations for 11 variables (11 numeric)</span></span>
+<span><span class="co">#&gt; 45 of 55 pairs significant at p &lt; 0.05</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Variables: mpg, cyl, disp, hp, drat, wt, qsec, vs, am, gear, carb</span></span></code></pre></div>
+<p>Use <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> to view the full association matrix with significance stars:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://CU-Anschutz-GMWG.github.io/VisXplore/">VisXplore</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/VisXplore.html">VisXplore</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Correlation/Association Matrix</span></span>
+<span><span class="co">#&gt; Significance: **** p&lt;0.0001, *** p&lt;0.001, ** p&lt;0.01, * p&lt;0.05</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;            cyl      disp        hp      drat        wt      qsec        vs</span></span>
+<span><span class="co">#&gt; mpg  -0.91**** -0.91**** -0.89****  0.65**** -0.89****  0.47**    0.71****</span></span>
+<span><span class="co">#&gt; cyl             0.93****   0.9**** -0.68****  0.86**** -0.57***  -0.81****</span></span>
+<span><span class="co">#&gt; disp                      0.85**** -0.68****   0.9**** -0.46**   -0.72****</span></span>
+<span><span class="co">#&gt; hp                                 -0.52**    0.77**** -0.67**** -0.75****</span></span>
+<span><span class="co">#&gt; drat                                         -0.75****  0.09      0.45*   </span></span>
+<span><span class="co">#&gt; wt                                                     -0.23     -0.59*** </span></span>
+<span><span class="co">#&gt; qsec                                                              0.79****</span></span>
+<span><span class="co">#&gt; vs                                                                        </span></span>
+<span><span class="co">#&gt; am                                                                        </span></span>
+<span><span class="co">#&gt; gear                                                                      </span></span>
+<span><span class="co">#&gt;             am      gear      carb</span></span>
+<span><span class="co">#&gt; mpg   0.56***   0.54**   -0.66****</span></span>
+<span><span class="co">#&gt; cyl  -0.52**   -0.56***   0.58*** </span></span>
+<span><span class="co">#&gt; disp -0.62***  -0.59***   0.54**  </span></span>
+<span><span class="co">#&gt; hp   -0.36*    -0.33      0.73****</span></span>
+<span><span class="co">#&gt; drat  0.69****  0.74**** -0.13    </span></span>
+<span><span class="co">#&gt; wt   -0.74**** -0.68****   0.5**  </span></span>
+<span><span class="co">#&gt; qsec  -0.2     -0.15     -0.66****</span></span>
+<span><span class="co">#&gt; vs    0.17      0.28     -0.63****</span></span>
+<span><span class="co">#&gt; am              0.81**** -0.06    </span></span>
+<span><span class="co">#&gt; gear                      0.11</span></span></code></pre></div>
+<p>Use <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> to generate a network plot where node positions are derived from MDS on the dissimilarity matrix (<code>1 - |association|</code>), and edges represent associations above a minimum threshold:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result</span>, min_cor <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-network-plot-1.png" width="100%"></p>
+<p>You can also customize the network plot directly with <code><a href="reference/npc_mixed_cor.html">npc_mixed_cor()</a></code>:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/npc_mixed_cor.html">npc_mixed_cor</a></span><span class="op">(</span><span class="va">result</span>, min_cor <span class="op">=</span> <span class="fl">0.5</span>, show_signif <span class="op">=</span> <span class="cn">TRUE</span>, label_size <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-custom-plot-1.png" width="100%"></p>
+</div>
+<div class="section level2">
+<h2 id="mixed-variable-types">Mixed variable types<a class="anchor" aria-label="anchor" href="#mixed-variable-types"></a>
+</h2>
+<p>When your data includes factor or ordinal variables, specify the types explicitly:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">types</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"numeric"</span>, <span class="st">"factor"</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"numeric"</span>, <span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"factor"</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>           <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"ordinal"</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">result_mixed</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pairwise_cor.html">pairwise_cor</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="va">types</span><span class="op">)</span></span>
+<span><span class="va">result_mixed</span></span>
+<span><span class="co">#&gt; Pairwise associations for 11 variables (6 numeric, 3 factor, 2 ordinal)</span></span>
+<span><span class="co">#&gt; 44 of 55 pairs significant at p &lt; 0.05</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Variables: mpg, cyl, disp, hp, drat, wt, qsec, vs, am, gear, carb</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="data-quality-checks">Data quality checks<a class="anchor" aria-label="anchor" href="#data-quality-checks"></a>
+</h2>
+<p>Use <code><a href="reference/data_check.html">data_check()</a></code> to identify empty or zero-variance columns before analysis:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>, y <span class="op">=</span> <span class="fl">1</span>, z <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/data_check.html">data_check</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: z missing for all observations</span></span>
+<span><span class="co">#&gt; Warning: y with same value for all observations</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="data-transformations">Data transformations<a class="anchor" aria-label="anchor" href="#data-transformations"></a>
+</h2>
+<p>VisXplore provides helper functions for common preprocessing steps that return data frames ready to be column-bound with the original data:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span>, b <span class="op">=</span> <span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span>, c <span class="op">=</span> <span class="fl">11</span><span class="op">:</span><span class="fl">15</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Log or sqrt transform</span></span>
+<span><span class="fu"><a href="reference/visx_transform.html">visx_transform</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, fun <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   a_log    b_log</span></span>
+<span><span class="co">#&gt; 1     1 0.000000</span></span>
+<span><span class="co">#&gt; 2     2 1.386294</span></span>
+<span><span class="co">#&gt; 3     3 2.197225</span></span>
+<span><span class="co">#&gt; 4     4 2.772589</span></span>
+<span><span class="co">#&gt; 5     5 3.218876</span></span>
+<span></span>
+<span><span class="co"># Compute a ratio of two columns</span></span>
+<span><span class="fu"><a href="reference/visx_ratio.html">visx_ratio</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   a_over_b</span></span>
+<span><span class="co">#&gt; 1 2.718282</span></span>
+<span><span class="co">#&gt; 2 1.847264</span></span>
+<span><span class="co">#&gt; 3 2.231726</span></span>
+<span><span class="co">#&gt; 4 3.412384</span></span>
+<span><span class="co">#&gt; 5 5.936526</span></span>
+<span></span>
+<span><span class="co"># Row-wise mean across columns</span></span>
+<span><span class="fu"><a href="reference/visx_mean_vars.html">visx_mean_vars</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    mean_var</span></span>
+<span><span class="co">#&gt; 1  4.906094</span></span>
+<span><span class="co">#&gt; 2  7.796352</span></span>
+<span><span class="co">#&gt; 3 14.028512</span></span>
+<span><span class="co">#&gt; 4 28.199383</span></span>
+<span><span class="co">#&gt; 5 62.804386</span></span>
+<span></span>
+<span><span class="co"># Collapse factor levels</span></span>
+<span><span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"blue"</span>, <span class="st">"green"</span>, <span class="st">"red"</span>, <span class="st">"blue"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/visx_collapse_levels.html">visx_collapse_levels</a></span><span class="op">(</span><span class="va">colors</span>, <span class="st">"color"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"blue"</span><span class="op">)</span>, <span class="st">"warm_cool"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   color_bin</span></span>
+<span><span class="co">#&gt; 1 warm_cool</span></span>
+<span><span class="co">#&gt; 2 warm_cool</span></span>
+<span><span class="co">#&gt; 3     green</span></span>
+<span><span class="co">#&gt; 4 warm_cool</span></span>
+<span><span class="co">#&gt; 5 warm_cool</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="interactive-shiny-app">Interactive Shiny app<a class="anchor" aria-label="anchor" href="#interactive-shiny-app"></a>
+</h2>
+<p>For point-and-click exploration, launch the built-in Shiny app. It provides tabs for the network plot, variable distributions, correlation matrix, summary statistics, and data transformations:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/VisXplore.html">VisXplore</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="video-walkthrough">Video walkthrough<a class="anchor" aria-label="anchor" href="#video-walkthrough"></a>
