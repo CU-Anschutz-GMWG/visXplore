@@ -20,10 +20,11 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/CU-Anschutz-GMWG/VisXplore/branch/master/graph/badge.svg)](https://app.codecov.io/gh/CU-Anschutz-GMWG/VisXplore?branch=master)
 <!-- badges: end -->
 
-VisXplore provides dynamic, interactive visualization of the distribution and
-correlation/association structure of multi-dimensional data. It supports
-real-time data preprocessing and presents important information for variable
-selection.
+VisXplore is an R package for interactive data preprocessing and variable
+selection across mixed variable types. It computes pairwise
+correlations and associations for numeric, nominal (factor), and ordinal
+variables and visualizes the results as a network plot. It supports real-time
+data preprocessing and presents important information for variable selection.
 
 VisXplore offers both a **code-forward S3 API** for use in R scripts and
 notebooks, and an optional **Shiny app** for interactive exploration.
@@ -37,22 +38,94 @@ You can install the development version of VisXplore from [GitHub](https://githu
 devtools::install_github("CU-Anschutz-GMWG/VisXplore")
 ```
 
-## Example
+## Pairwise association
 
-Use the programmatic API:
+The core function `pairwise_cor()` computes a pairwise association matrix for
+all variables in a data frame. The association measure depends on the variable
+types involved:
 
-``` r
+| Variable pair          | Measure         |
+|------------------------|-----------------|
+| Numeric vs. numeric    | Spearman rho    |
+| Factor vs. any         | Pseudo R-squared (multinomial regression) |
+| Ordinal vs. ordinal/numeric | Goodman-Kruskal gamma |
+
+```{r pairwise, message=FALSE}
 library(VisXplore)
 result <- pairwise_cor(mtcars)
 result
-summary(result)
-plot(result)
 ```
 
-Or launch the interactive Shiny app:
+Use `summary()` to view the full association matrix with significance stars:
+
+```{r summary}
+summary(result)
+```
+
+Use `plot()` to generate a network plot where node positions are derived from
+MDS on the dissimilarity matrix (`1 - |association|`), and edges represent
+associations above a minimum threshold:
+
+```{r network-plot, fig.width=8, fig.height=6}
+plot(result, min_cor = 0.3)
+```
+
+You can also customize the network plot directly with `npc_mixed_cor()`:
+
+```{r custom-plot, fig.width=8, fig.height=6}
+npc_mixed_cor(result, min_cor = 0.5, show_signif = TRUE, label_size = 4)
+```
+
+## Mixed variable types
+
+When your data includes factor or ordinal variables, specify the types
+explicitly:
+
+```{r mixed}
+types <- c("numeric", "factor", rep("numeric", 5), rep("factor", 2),
+           rep("ordinal", 2))
+result_mixed <- pairwise_cor(mtcars, types)
+result_mixed
+```
+
+## Data quality checks
+
+Use `data_check()` to identify empty or zero-variance columns before analysis:
+
+```{r data-check}
+df <- data.frame(x = rnorm(10), y = 1, z = NA)
+data_check(df)
+```
+
+## Data transformations
+
+VisXplore provides helper functions for common preprocessing steps that return
+data frames ready to be column-bound with the original data:
+
+```{r transforms}
+df <- data.frame(a = exp(1:5), b = (1:5)^2, c = 11:15)
+
+# Log or sqrt transform
+visx_transform(df, c("a", "b"), fun = "log")
+
+# Compute a ratio of two columns
+visx_ratio(df, "a", "b")
+
+# Row-wise mean across columns
+visx_mean_vars(df, c("a", "b", "c"))
+
+# Collapse factor levels
+colors <- data.frame(color = c("red", "blue", "green", "red", "blue"))
+visx_collapse_levels(colors, "color", c("red", "blue"), "warm_cool")
+```
+
+## Interactive Shiny app
+
+For point-and-click exploration, launch the built-in Shiny app. It provides
+tabs for the network plot, variable distributions, correlation matrix,
+summary statistics, and data transformations:
 
 ``` r
-library(VisXplore)
 VisXplore(mtcars)
 ```
 

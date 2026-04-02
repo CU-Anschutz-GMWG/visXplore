@@ -102,6 +102,7 @@ plot.visx_cor <- function(x, min_cor = 0.3, sig.level = 0.05,
                           show_signif = FALSE, ...) {
   p <- npc_mixed_cor(x, min_cor = min_cor, sig.level = sig.level,
                      show_signif = show_signif, ...)
+  print(p)
   invisible(p)
 }
 
