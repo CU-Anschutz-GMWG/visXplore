@@ -5,6 +5,4 @@ articles:
   - title: All vignettes
     contents:
     - VisXplore_workflow
-exclude:
-  - CLAUDE.md
 
