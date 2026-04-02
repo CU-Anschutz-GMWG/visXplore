@@ -31,11 +31,3 @@
   : Print method for visx_cor objects
 - [`summary(`*`<visx_cor>`*`)`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/summary.visx_cor.md)
   : Summary method for visx_cor objects
-- [`visx_collapse_levels()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/visx_collapse_levels.md)
-  : Collapse levels of a categorical variable
-- [`visx_mean_vars()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/visx_mean_vars.md)
-  : Compute row-wise mean of selected columns
-- [`visx_ratio()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/visx_ratio.md)
-  : Compute ratio of two columns
-- [`visx_transform()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/visx_transform.md)
-  : Apply univariate transformation to selected columns

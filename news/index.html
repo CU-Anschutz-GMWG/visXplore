@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">VisXplore</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,46 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.1.0" id="visxplore-210">VisXplore 2.1.0<a class="anchor" aria-label="anchor" href="#visxplore-210"></a></h2>
+<div class="section level3">
+<h3 id="shiny-app-improvements-2-1-0">Shiny app improvements<a class="anchor" aria-label="anchor" href="#shiny-app-improvements-2-1-0"></a></h3>
+<ul><li>Variable checkboxes now filter the network plot, correlation matrix, and statistics tabs reactively</li>
+<li>Significance radio buttons now work correctly (fixed string-to-numeric conversion)</li>
+<li>Statistics tab handles both all-numeric (VIF) and mixed-type (GVIF) data</li>
+<li>Added variable checkbox panel to the Statistics tab for interactive feature selection</li>
+<li>Fixed crash on launch caused by lazy evaluation of the <code>data</code> argument</li>
+<li>Clear error message when calling <code><a href="../reference/VisXplore.html">VisXplore()</a></code> without data</li>
+<li>Fixed <code>xtfrm</code> / “undefined columns selected” errors on the Categorical variables tab</li>
+<li>Suppressed <code>stat_bin()</code> warning by setting explicit bin count in histograms</li>
+<li>Fixed duplicate HTML element IDs between <code>uiOutput</code> containers and their inputs</li>
+</ul></div>
+<div class="section level3">
+<h3 id="code-recipe-tab-2-1-0">Code recipe tab<a class="anchor" aria-label="anchor" href="#code-recipe-tab-2-1-0"></a></h3>
+<ul><li>New “Code” tab in the Shiny app accumulates a reproducible R pipeline as users apply transformations</li>
+<li>Recipe emits standard <code><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">dplyr::mutate()</a></code> calls (not package-specific wrappers), so the output is portable</li>
+<li>Includes a “Copy to clipboard” button</li>
+</ul></div>
+<div class="section level3">
+<h3 id="api-simplification-2-1-0">API simplification<a class="anchor" aria-label="anchor" href="#api-simplification-2-1-0"></a></h3>
+<ul><li>Removed exported transform helpers: <code>visx_transform()</code>, <code>visx_ratio()</code>, <code>visx_mean_vars()</code>, <code>visx_collapse_levels()</code>
+</li>
+<li>Users should use <code><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">dplyr::mutate()</a></code> for preprocessing before passing data to <code><a href="../reference/pairwise_cor.html">pairwise_cor()</a></code>
+</li>
+<li>The Shiny app’s Code tab generates the equivalent <code>dplyr</code> code automatically</li>
+</ul></div>
+<div class="section level3">
+<h3 id="plotvisx_cor-fix-2-1-0">plot.visx_cor fix<a class="anchor" aria-label="anchor" href="#plotvisx_cor-fix-2-1-0"></a></h3>
+<ul><li>
+<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on a <code>visx_cor</code> object now displays the plot (previously returned invisibly without rendering)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="testing-2-1-0">Testing<a class="anchor" aria-label="anchor" href="#testing-2-1-0"></a></h3>
+<ul><li>Added <code>testServer()</code> tests for Shiny reactive logic (transformations, code recipe, variable filtering, significance)</li>
+<li>Added <code>shinytest2</code> integration smoke test</li>
+<li>Added <code>shinytest2</code> to Suggests</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.0" id="visxplore-200">VisXplore 2.0.0<a class="anchor" aria-label="anchor" href="#visxplore-200"></a></h2>
 <div class="section level3">
 <h3 id="package-renamed-visx--visxplore-2-0-0">Package renamed: VisX → VisXplore<a class="anchor" aria-label="anchor" href="#package-renamed-visx--visxplore-2-0-0"></a></h3>
@@ -55,13 +95,13 @@
 <li>
 <code><a href="../reference/data_check.html">data_check()</a></code>: data validation utility</li>
 <li>
-<code><a href="../reference/visx_transform.html">visx_transform()</a></code>: apply log/sqrt transformations to columns</li>
+<code>visx_transform()</code>: apply log/sqrt transformations to columns</li>
 <li>
-<code><a href="../reference/visx_ratio.html">visx_ratio()</a></code>: compute ratio of two columns</li>
+<code>visx_ratio()</code>: compute ratio of two columns</li>
 <li>
-<code><a href="../reference/visx_mean_vars.html">visx_mean_vars()</a></code>: row-wise mean of selected columns</li>
+<code>visx_mean_vars()</code>: row-wise mean of selected columns</li>
 <li>
-<code><a href="../reference/visx_collapse_levels.html">visx_collapse_levels()</a></code>: collapse factor levels</li>
+<code>visx_collapse_levels()</code>: collapse factor levels</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-2-0-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2-0-0"></a></h3>

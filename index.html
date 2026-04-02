@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">VisXplore</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -159,54 +159,10 @@
 <span><span class="co">#&gt; Warning: y with same value for all observations</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="data-transformations">Data transformations<a class="anchor" aria-label="anchor" href="#data-transformations"></a>
-</h2>
-<p>VisXplore provides helper functions for common preprocessing steps that return data frames ready to be column-bound with the original data:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span>, b <span class="op">=</span> <span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span>, c <span class="op">=</span> <span class="fl">11</span><span class="op">:</span><span class="fl">15</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Log or sqrt transform</span></span>
-<span><span class="fu"><a href="reference/visx_transform.html">visx_transform</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, fun <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   a_log    b_log</span></span>
-<span><span class="co">#&gt; 1     1 0.000000</span></span>
-<span><span class="co">#&gt; 2     2 1.386294</span></span>
-<span><span class="co">#&gt; 3     3 2.197225</span></span>
-<span><span class="co">#&gt; 4     4 2.772589</span></span>
-<span><span class="co">#&gt; 5     5 3.218876</span></span>
-<span></span>
-<span><span class="co"># Compute a ratio of two columns</span></span>
-<span><span class="fu"><a href="reference/visx_ratio.html">visx_ratio</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   a_over_b</span></span>
-<span><span class="co">#&gt; 1 2.718282</span></span>
-<span><span class="co">#&gt; 2 1.847264</span></span>
-<span><span class="co">#&gt; 3 2.231726</span></span>
-<span><span class="co">#&gt; 4 3.412384</span></span>
-<span><span class="co">#&gt; 5 5.936526</span></span>
-<span></span>
-<span><span class="co"># Row-wise mean across columns</span></span>
-<span><span class="fu"><a href="reference/visx_mean_vars.html">visx_mean_vars</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    mean_var</span></span>
-<span><span class="co">#&gt; 1  4.906094</span></span>
-<span><span class="co">#&gt; 2  7.796352</span></span>
-<span><span class="co">#&gt; 3 14.028512</span></span>
-<span><span class="co">#&gt; 4 28.199383</span></span>
-<span><span class="co">#&gt; 5 62.804386</span></span>
-<span></span>
-<span><span class="co"># Collapse factor levels</span></span>
-<span><span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"blue"</span>, <span class="st">"green"</span>, <span class="st">"red"</span>, <span class="st">"blue"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/visx_collapse_levels.html">visx_collapse_levels</a></span><span class="op">(</span><span class="va">colors</span>, <span class="st">"color"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"blue"</span><span class="op">)</span>, <span class="st">"warm_cool"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   color_bin</span></span>
-<span><span class="co">#&gt; 1 warm_cool</span></span>
-<span><span class="co">#&gt; 2 warm_cool</span></span>
-<span><span class="co">#&gt; 3     green</span></span>
-<span><span class="co">#&gt; 4 warm_cool</span></span>
-<span><span class="co">#&gt; 5 warm_cool</span></span></code></pre></div>
-</div>
-<div class="section level2">
 <h2 id="interactive-shiny-app">Interactive Shiny app<a class="anchor" aria-label="anchor" href="#interactive-shiny-app"></a>
 </h2>
 <p>For point-and-click exploration, launch the built-in Shiny app. It provides tabs for the network plot, variable distributions, correlation matrix, summary statistics, and data transformations:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/VisXplore.html">VisXplore</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
