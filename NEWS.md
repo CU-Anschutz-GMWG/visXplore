@@ -1,5 +1,5 @@
 
-# 2.0.0
+# VisXplore 2.0.0
 
 ## Package renamed: VisX → VisXplore
 - Package renamed to VisXplore and moved to CU-Anschutz-GMWG GitHub organization
@@ -31,7 +31,7 @@
 - Vectorized edge-building loops in `npc_mixed_cor()` 
 - Expanded test suite with edge cases and new test files
 
-# 0.3.0
+# VisX 0.3.0
 
 - Updated documentation, reduced dependencies
 - Exported more functions so that plots + associations can be worked with 
@@ -39,6 +39,6 @@
 - Added download data button
 - Added dependency on `nnet`  (previously imported, but this was causing issues)
 
-# 0.2.0
+# VisX 0.2.0
 
 - Initial version completed

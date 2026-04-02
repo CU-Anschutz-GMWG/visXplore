@@ -1,4 +1,10 @@
 url: https://CU-Anschutz-GMWG.github.io/VisXplore/
 template:
   bootstrap: 5
+articles:
+  - title: All vignettes
+    contents:
+    - VisXplore_workflow
+exclude:
+  - CLAUDE.md
 
