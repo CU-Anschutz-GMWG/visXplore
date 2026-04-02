@@ -5,7 +5,6 @@ Version: 2.0.0
 Authors@R: c(person("Ryan", "Peterson", email = "ryan-peterson@uiowa.edu", role = "cre"),
              person("Ying", "Jin", email = "ying.jin@cuanschutz.edu", role = "aut"),
              person("Carsten", "Goerg", email = "carsten.goerg@cuanschutz.edu", role = "aut"))
-Maintainer: Ying Jin <ying.jin@cuanschutz.edu>
 Description: An accessible, user-friendly, interactive software application for 
     guiding data processing and model selection. Supports data transformations with 
     immediate visual feedback.  
