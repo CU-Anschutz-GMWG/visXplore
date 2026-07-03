@@ -203,6 +203,45 @@ test_that("statistics tab filters by selected variables", {
   })
 })
 
+test_that("co-radar plot renders for selected variables", {
+  server <- server_VisXplore(mtcars[, 1:5])
+  testServer(server, {
+    session$setInputs(
+      vars_radar = c("mpg", "cyl", "disp", "hp"),
+      radar_clusters = 1,
+      radar_min_deg = 10,
+      radar_sd = TRUE
+    )
+    expect_no_error(output$coradar_plot)
+  })
+})
+
+test_that("co-radar plot supports k-means archetypes", {
+  server <- server_VisXplore(mtcars[, 1:5])
+  testServer(server, {
+    session$setInputs(
+      vars_radar = c("mpg", "cyl", "disp", "hp"),
+      radar_clusters = 2,
+      radar_min_deg = 10,
+      radar_sd = FALSE
+    )
+    expect_no_error(output$coradar_plot)
+  })
+})
+
+test_that("co-radar plot requires at least 3 variables", {
+  server <- server_VisXplore(mtcars[, 1:5])
+  testServer(server, {
+    session$setInputs(
+      vars_radar = c("mpg", "cyl"),
+      radar_clusters = 1,
+      radar_min_deg = 10,
+      radar_sd = TRUE
+    )
+    expect_error(output$coradar_plot)
+  })
+})
+
 test_that("data check output renders", {
   server <- server_VisXplore(mtcars)
   testServer(server, {

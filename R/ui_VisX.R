@@ -51,6 +51,19 @@ ui <- function(request){
                                                   selected = "none")
                     ),
 
+                    # panel for co-radar input
+                    conditionalPanel(condition = "input.tabs1=='Co-radar plot'",
+                                     uiOutput("vars_radar_ui"),
+                                     numericInput("radar_clusters",
+                                                  "Archetypes (k-means clusters)",
+                                                  value = 1, min = 1, max = 8, step = 1),
+                                     sliderInput("radar_min_deg",
+                                                 "Minimum axis separation (degrees)",
+                                                 min = 0, max = 30, value = 10),
+                                     checkboxInput("radar_sd", "Show variability band",
+                                                   value = TRUE)
+                    ),
+
                     # panel for statistics input
                     conditionalPanel(condition = "input.tabs1=='Statistics'",
                                      uiOutput("vars_stat_ui")
@@ -69,6 +82,9 @@ ui <- function(request){
                                 # barplots for categorical variables
                                 tabPanel("Categorical variables",
                                          plotOutput("cat_vars", inline = T)),
+                                # co-radar plot tab
+                                tabPanel(title = "Co-radar plot",
+                                         plotOutput("coradar_plot")),
                                 # correlation matrix tab
                                 tabPanel(title = "Correlation and association matrix",
                                          htmlOutput("cormat")),
@@ -92,16 +108,21 @@ ui <- function(request){
 
                                 # check
                                 tabPanel(title = "Note",
-                                         h4("Supported variable tabs:"),
-                                         p("Numeric: continous variable"),
-                                         p("Nominal: unorded discrete variable"),
-                                         p("Ordinal: ordered discrete varaible"),
+                                         h4("Supported variable types:"),
+                                         p("Numeric: continuous variable"),
+                                         p("Nominal: unordered discrete variable"),
+                                         p("Ordinal: ordered discrete variable"),
 
                                          h4("Correlation and association:"),
                                          p("Numeric vs Numeric: Spearman correlation and Spearman correlation test"),
-                                         p("Nominal vs Numeric/Nominal/Ordinal: PseudoR (square-root of Pseudo R-squared) and p-value from mulitnominal regression"),
+                                         p("Nominal vs Numeric/Nominal/Ordinal: PseudoR (square-root of Pseudo R-squared) and p-value from multinomial regression"),
                                          p("Ordinal vs  Numeric/Ordinal: GKgamma and GKgamma correlation test"),
-                                         p("For correlation test, ****: p<0.0001, ***: p<0.001, **: p<0.01), *:p<0.05)"),
+                                         p("For correlation test, ****: p<0.0001, ***: p<0.001, **: p<0.01, *: p<0.05"),
+
+                                         h4("Co-radar plot:"),
+                                         p("A radar plot whose axes are placed by correlation structure: strongly associated variables point in similar directions."),
+                                         p("Each axis spans the observed range of its variable (min-max normalized). The polygon shows group means; the shaded band shows +/- half a standard deviation."),
+                                         p("Set archetypes > 1 to summarize k-means clusters as separate shapes."),
 
                                          h4("Statistics:"),
                                          h5("R-squared:"),

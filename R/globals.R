@@ -3,7 +3,8 @@ utils::globalVariables(c(
   "name", "value", "N",           # make_hist, make_bar
   "type", "x", "y", "xend", "yend", "id",  # npc_mixed_cor
   "proximity", "sign", "var_type",          # npc_mixed_cor
-  "ave", "sd"                               # make_hist
+  "ave", "sd",                              # make_hist
+  "lx", "ly", "variable", "poly_id", "group"  # plot.visx_coradar
 ))
 
 

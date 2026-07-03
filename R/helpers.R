@@ -45,10 +45,10 @@ corstars <-function(cor_value, cor_p, var_type){
   ## remove lower triangle of correlation matrix and empty row and columns
   Rnew[lower.tri(Rnew, diag = TRUE)] <- ""
   Rnew <- as.data.frame(Rnew)
-  Rnew <- Rnew[1:length(Rnew)-1, 2:ncol(Rnew)]
+  Rnew <- Rnew[-nrow(Rnew), -1]
 
   ## index for group rows and columns
-  row_id <- var_type[idx][1:length(var_type)-1]
+  row_id <- var_type[idx][-length(var_type)]
   col_id <- var_type[idx][-1]
 
   return(list(Rnew=Rnew, row_id=row_id, col_id=col_id))
@@ -77,25 +77,23 @@ get_r2 <- function(df, type) {
 
   r2 <- numeric(ncol(df))
   vars <- colnames(df)
-  # Work on a local copy so ordinal conversion doesn't affect subsequent iterations
-  df_work <- df
   for(i in seq_along(r2)){
     # formula
     f <- as.formula(paste(vars[i], "~ ."))
     # numeric
     if(type[i] == "numeric"){
-      r2[i] <- summary(lm(f, df_work))$r.squared
+      r2[i] <- summary(lm(f, df))$r.squared
     }
     # factor
     else if(type[i] == "factor"){
-      mult_fit <- multinom(f, data = df_work, model = T, trace = FALSE)
+      mult_fit <- multinom(f, data = df, model = T, trace = FALSE)
       f_null <- as.formula(paste(vars[i], "~ 1"))
-      null_fit <- multinom(f_null, data = df_work, model = T, trace = FALSE)
+      null_fit <- multinom(f_null, data = df, model = T, trace = FALSE)
       r2[i] <- nagelkerke_r2(mult_fit, null_fit)
     }
     # ordinal — convert to numeric for lm, but only in a temporary copy
     else if(type[i] == "ordinal"){
-      df_tmp <- df_work
+      df_tmp <- df
       df_tmp[, i] <- as.numeric(as.factor(df_tmp[, i]))
       r2[i] <- summary(lm(f, df_tmp))$r.squared
     }

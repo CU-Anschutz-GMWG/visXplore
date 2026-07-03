@@ -167,7 +167,7 @@ npc_mixed_cor <- function (cor_results,
   if(show_signif & n_paths2>0){
     npc <- npc+
       geom_curve(data = paths2,
-                aes(x = x, y = y, xend = xend, yend = yend, alpha = 0.5))
+                aes(x = x, y = y, xend = xend, yend = yend), alpha = 0.5)
   }
 
   # add variable names and legend

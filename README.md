@@ -93,7 +93,7 @@ represent associations above a minimum threshold:
 plot(result, min_cor = 0.3)
 ```
 
-<img src="man/figures/README-network-plot-1.png" width="100%" />
+<img src="man/figures/README-network-plot-1.png" alt="" width="100%" />
 
 You can also customize the network plot directly with `npc_mixed_cor()`:
 
@@ -101,7 +101,52 @@ You can also customize the network plot directly with `npc_mixed_cor()`:
 npc_mixed_cor(result, min_cor = 0.5, show_signif = TRUE, label_size = 4)
 ```
 
-<img src="man/figures/README-custom-plot-1.png" width="100%" />
+<img src="man/figures/README-custom-plot-1.png" alt="" width="100%" />
+
+## Co-radar plots
+
+Traditional radar (spider) plots order their axes arbitrarily, which
+changes the shapes they display. `coradar()` places axes by the
+correlation structure of the data instead — strongly associated
+variables point in similar directions, so shapes are interpretable and
+stable. Each axis spans the observed range of its variable, the polygon
+traces group means, and the shaded band shows ± half a standard
+deviation:
+
+``` r
+radar <- coradar(mtcars, vars = c("mpg", "disp", "hp", "drat", "wt", "qsec"),
+                 min_degrees = 20)
+radar
+#> Co-radar plot of 6 variables, 32 observations
+#> Normalization: minmax 
+#> 
+#> Axis positions (degrees):
+#>  mpg disp   wt drat qsec   hp 
+#>    0   20   40   74  272  340
+plot(radar)
+```
+
+<img src="man/figures/README-coradar-1.png" alt="" width="100%" />
+
+Here the tight cluster of axes (`mpg`, `disp`, `wt`, `hp`) immediately
+shows those variables move together (`min_degrees` keeps tightly
+correlated axes readable).
+
+Pair it with unsupervised learning to compare patient/observation
+*archetypes*: pass a grouping column or a number of k-means clusters:
+
+``` r
+set.seed(1)
+plot(coradar(mtcars, vars = c("mpg", "disp", "hp", "drat", "wt", "qsec"),
+             groups = 2, min_degrees = 20))
+```
+
+<img src="man/figures/README-coradar-archetypes-1.png" alt="" width="100%" />
+
+Overlay individual observations with `plot(radar, individuals = ...)`,
+or emphasize model-selected variables with
+`plot(radar, highlight = ...)`. Axis placement can reuse a
+`pairwise_cor()` result via the `cor_matrix` argument.
 
 ## Mixed variable types
 
@@ -134,8 +179,8 @@ data_check(df)
 ## Interactive Shiny app
 
 For point-and-click exploration, launch the built-in Shiny app. It
-provides tabs for the network plot, variable distributions, correlation
-matrix, summary statistics, and data transformations:
+provides tabs for the network plot, variable distributions, co-radar
+plot, correlation matrix, summary statistics, and data transformations:
 
 ``` r
 VisXplore(mtcars)

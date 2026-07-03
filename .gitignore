@@ -9,3 +9,5 @@ inst/doc
 *.DS_Store
 docs
 .claude/settings.*
+.positai
+archive/

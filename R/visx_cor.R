@@ -36,13 +36,7 @@ print.visx_cor <- function(x, ...) {
 
   # Variable type counts
   type_counts <- table(factor(vt, levels = c("numeric", "factor", "ordinal")))
-  type_labels <- c("numeric", "factor", "ordinal")
-  type_parts <- character(0)
-  for (i in seq_along(type_labels)) {
-    if (type_counts[type_labels[i]] > 0) {
-      type_parts <- c(type_parts, paste0(type_counts[type_labels[i]], " ", type_labels[i]))
-    }
-  }
+  type_parts <- paste(type_counts, names(type_counts))[type_counts > 0]
   type_str <- paste(type_parts, collapse = ", ")
 
   # Significant pairs

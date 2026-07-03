@@ -1,4 +1,31 @@
 
+# VisXplore 2.2.0
+
+## Co-radar plots
+- New `coradar()` function creates correlation-based radar plots: axis angles
+  are set by the association structure of the data (via a force-directed
+  layout), so strongly correlated variables point in similar directions and
+  the arbitrary axis ordering of traditional radar plots is resolved
+- Returns a `visx_coradar` S3 object with `print()` and `plot()` methods
+- Archetype support: summarize the whole sample, groups defined by a column,
+  or k-means clusters as mean shapes with a shaded variability band
+- `plot()` options to overlay individual observations (`individuals`) and to
+  emphasize model-selected axes (`highlight`)
+- Normalization options: min-max (default), rank (robust to skew), or none
+- New `coradar_pos()` exposes the axis-placement algorithm directly; accepts a
+  plain correlation matrix or a `pairwise_cor()` result, enforces a minimum
+  angular separation between axes
+- The layout algorithm anneals from equidistant and MDS-derived starting
+  positions and refines with coordinate descent; it achieves lower layout
+  stress than the original prototype at a fraction of the runtime
+- New "Co-radar plot" tab in the Shiny app with variable selection, k-means
+  archetypes, minimum axis separation, and variability band controls
+
+## Code improvements
+- Clearer matrix indexing in `corstars()`, removed a redundant data copy in
+  `get_r2()`, moved a constant alpha out of `aes()` in `npc_mixed_cor()`
+- Fixed typos in the Shiny app Note tab
+
 # VisXplore 2.1.0
 
 ## Shiny app improvements

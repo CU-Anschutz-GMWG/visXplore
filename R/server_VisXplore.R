@@ -170,6 +170,29 @@ server_VisXplore <- function(data) {
                     min_cor = input$min_cor)
     }, height = 800, width = 800)
 
+    # co-radar plot tab
+    output$vars_radar_ui <- renderUI({
+      num_names <- colnames(df_lst$df_all)[df_lst$var_type == "numeric"]
+      checkboxGroupInput("vars_radar", "Numeric variables",
+                         choices = num_names, selected = num_names)
+    })
+
+    output$coradar_plot <- renderPlot({
+      req(input$vars_radar)
+      validate(need(length(input$vars_radar) >= 3,
+                    "Select at least 3 numeric variables."))
+      df_sub <- df_lst$df_all[, input$vars_radar, drop = FALSE]
+      df_sub <- mutate(df_sub, across(everything(), as.numeric))
+
+      k <- input$radar_clusters
+      groups <- if (!is.na(k) && k > 1) as.integer(k) else NULL
+      # fixed seed so the k-means archetypes are stable across re-renders
+      if (!is.null(groups)) set.seed(1)
+      cr <- suppressMessages(coradar(df_sub, groups = groups,
+                                     min_degrees = input$radar_min_deg))
+      plot(cr, sd_band = input$radar_sd)
+    }, height = 700, width = 750)
+
     output$cormat <-  renderText({
       cor_mats <- pairwise_cor(df_lst$df_all, df_lst$var_type)
 
