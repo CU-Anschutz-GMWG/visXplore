@@ -27,7 +27,8 @@ Imports:
     shiny,
     stats,
     tibble,
-    tidyr
+    tidyr,
+    withr
 VignetteBuilder: knitr
 Suggests:
     golem,
@@ -36,7 +37,6 @@ Suggests:
     rmarkdown,
     shinytest2,
     testthat (>= 3.0.0),
-    withr,
     devtools
 URL: https://CU-Anschutz-GMWG.github.io/VisXplore/
 Config/roxygen2/version: 8.0.0

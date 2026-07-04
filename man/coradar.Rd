@@ -51,6 +51,8 @@ A \code{visx_coradar} object (S3 class) containing:
   \item{data}{the complete-case data for \code{vars}}
   \item{data_scaled}{the normalized data}
   \item{groups}{factor of group assignments (or NULL)}
+  \item{group_source}{how groups were formed: "overall", "column",
+    "assignment", or "kmeans"}
   \item{cor_matrix}{the matrix used for axis placement}
 }
 Use \code{print()} and \code{plot()} methods on the result.

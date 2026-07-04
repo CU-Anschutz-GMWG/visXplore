@@ -200,6 +200,8 @@ enforce_min_sep <- function(theta, min_sep) {
 #'   \item{data}{the complete-case data for \code{vars}}
 #'   \item{data_scaled}{the normalized data}
 #'   \item{groups}{factor of group assignments (or NULL)}
+#'   \item{group_source}{how groups were formed: "overall", "column",
+#'     "assignment", or "kmeans"}
 #'   \item{cor_matrix}{the matrix used for axis placement}
 #' }
 #' Use \code{print()} and \code{plot()} methods on the result.
@@ -266,30 +268,57 @@ coradar <- function(data, vars = NULL, groups = NULL,
 
   # axis placement from association structure
   if (is.null(cor_matrix)) {
-    cmat <- cor(x, method = "spearman")
+    constant <- vapply(x, function(v) {
+      rng <- range(v, na.rm = TRUE)
+      diff(rng) == 0
+    }, logical(1))
+    if (any(constant)) {
+      message("Constant variable(s) treated as uncorrelated on the layout: ",
+              paste(vars[constant], collapse = ", "))
+    }
+    # constant columns make cor() warn about zero standard deviation and
+    # return NA; we handle those NAs explicitly below, so suppress the warning
+    cmat <- suppressWarnings(cor(x, method = "spearman"))
+    # a constant column has undefined correlation (NA); place it neutrally
+    cmat[is.na(cmat)] <- 0
+    diag(cmat) <- 1
   } else {
     if (inherits(cor_matrix, "visx_cor")) cor_matrix <- cor_matrix$cor_value
     cor_matrix <- as.matrix(cor_matrix)
-    if (!all(vars %in% colnames(cor_matrix))) {
-      stop("cor_matrix must contain all plotted variables: ",
-           paste(setdiff(vars, colnames(cor_matrix)), collapse = ", "))
+    if (is.null(rownames(cor_matrix)) && !is.null(colnames(cor_matrix))) {
+      rownames(cor_matrix) <- colnames(cor_matrix)
+    }
+    labs <- intersect(rownames(cor_matrix), colnames(cor_matrix))
+    if (!all(vars %in% labs)) {
+      stop("cor_matrix must have all plotted variables as both row and ",
+           "column names. Missing: ",
+           paste(setdiff(vars, labs), collapse = ", "))
     }
     cmat <- cor_matrix[vars, vars]
   }
   positions <- coradar_pos(cmat, min_degrees, max_iterations)
 
-  x_scaled <- as.data.frame(lapply(x, rescale_var, method = normalize))
+  x_scaled <- as.data.frame(lapply(x, rescale_var, method = normalize),
+                            check.names = FALSE)
 
   # resolve archetype groups
   if (is.null(groups)) {
     grp <- NULL
+    group_source <- "overall"
   } else if (is.numeric(groups) && length(groups) == 1) {
     k <- as.integer(groups)
     if (k < 1) stop("groups must be a positive number of clusters.")
+    n_distinct <- nrow(unique(x_scaled))
+    if (k > n_distinct) {
+      stop("Requested ", k, " clusters but only ", n_distinct,
+           " distinct complete observations are available.")
+    }
     km <- kmeans(x_scaled, centers = k, nstart = 20)
     grp <- factor(paste("Cluster", km$cluster))
+    group_source <- "kmeans"
   } else if (length(groups) == nrow(data)) {
     grp <- factor(groups[keep])
+    group_source <- if (!is.null(group_var)) "column" else "assignment"
   } else {
     stop("groups must be NULL, a column name, a number of clusters, ",
          "or a vector with one value per row of data.")
@@ -315,6 +344,7 @@ coradar <- function(data, vars = NULL, groups = NULL,
       data_scaled = x_scaled,
       groups = grp,
       group_var = group_var,
+      group_source = group_source,
       cor_matrix = cmat,
       normalize = normalize
     ),
@@ -328,10 +358,13 @@ coradar <- function(data, vars = NULL, groups = NULL,
 #' @param method "minmax", "rank", or "none"
 #' @param ref reference vector defining the scale (defaults to v itself);
 #'  used to place new observations on the scale of the original data
+#' @param clamp if TRUE, hold values outside the reference range at the axis
+#'  bounds (used for individual overlays so an out-of-range value cannot map
+#'  to a negative radius and reflect through the plot origin)
 #' @return rescaled numeric vector
 #' @noRd
-rescale_var <- function(v, method, ref = v) {
-  switch(method,
+rescale_var <- function(v, method, ref = v, clamp = FALSE) {
+  out <- switch(method,
     minmax = {
       rng <- range(ref, na.rm = TRUE)
       if (diff(rng) == 0) rep(0.5, length(v))
@@ -340,6 +373,8 @@ rescale_var <- function(v, method, ref = v) {
     rank = stats::ecdf(ref)(v),
     none = v
   )
+  if (clamp && method != "none") out <- pmin(pmax(out, 0), 1)
+  out
 }
 
 
@@ -354,7 +389,10 @@ print.visx_coradar <- function(x, ...) {
   cat("Co-radar plot of", length(x$positions), "variables,",
       nrow(x$data_scaled), "observations\n")
   if (!is.null(x$groups)) {
-    src <- if (!is.null(x$group_var)) paste0("column '", x$group_var, "'") else "k-means"
+    src <- switch(x$group_source,
+                  column = paste0("column '", x$group_var, "'"),
+                  assignment = "supplied assignment",
+                  "k-means")
     cat("Archetypes (", src, "): ",
         paste(levels(x$groups), collapse = ", "), "\n", sep = "")
   }
@@ -555,15 +593,26 @@ individuals_scaled <- function(x, individuals) {
     }
     return(x$data_scaled[individuals, , drop = FALSE])
   }
-  individuals <- as.data.frame(individuals)
+  individuals <- as.data.frame(individuals, check.names = FALSE)
   missing_vars <- setdiff(vars, names(individuals))
   if (length(missing_vars)) {
     stop("individuals data is missing plotted variables: ",
          paste(missing_vars, collapse = ", "))
   }
   out <- individuals[vars]
+  outside <- FALSE
   for (v in vars) {
-    out[[v]] <- rescale_var(out[[v]], x$normalize, ref = x$data[[v]])
+    rng <- range(x$data[[v]], na.rm = TRUE)
+    if (x$normalize == "minmax" &&
+        any(out[[v]] < rng[1] | out[[v]] > rng[2], na.rm = TRUE)) {
+      outside <- TRUE
+    }
+    out[[v]] <- rescale_var(out[[v]], x$normalize, ref = x$data[[v]],
+                            clamp = TRUE)
+  }
+  if (outside) {
+    warning("Some individual values fall outside the observed range of the ",
+            "data and were clamped to the axis bounds.")
   }
   out
 }

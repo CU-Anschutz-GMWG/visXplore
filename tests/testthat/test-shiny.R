@@ -230,6 +230,40 @@ test_that("co-radar plot supports k-means archetypes and rounded shapes", {
   })
 })
 
+test_that("integer columns are offered on numeric tabs", {
+  df <- data.frame(a = 1:20L, b = as.numeric(21:40), c = rnorm(20),
+                   g = factor(rep(c("x", "y"), 10)))
+  server <- server_VisXplore(df)
+  testServer(server, {
+    expect_equal(unname(df_lst$var_type[["a"]]), "numeric")
+    expect_no_error(output$num_vars)
+    session$setInputs(vars_radar = c("a", "b", "c"), radar_clusters = 1,
+                      radar_min_deg = 10, radar_sd = TRUE, radar_rounded = FALSE)
+    expect_no_error(output$coradar_plot)
+  })
+})
+
+test_that("numeric tab handles one and zero numeric columns", {
+  # exactly one numeric column
+  s1 <- server_VisXplore(data.frame(x = rnorm(20),
+                                    f = factor(rep(c("a", "b"), 10))))
+  testServer(s1, { expect_no_error(output$num_vars) })
+  # zero numeric columns
+  s0 <- server_VisXplore(data.frame(f = factor(rep(c("a", "b"), 10)),
+                                    g = factor(rep(c("c", "d"), 10))))
+  testServer(s0, { expect_no_error(output$num_vars) })
+})
+
+test_that("co-radar tab rejects more archetypes than distinct rows", {
+  server <- server_VisXplore(mtcars[1:5, ])
+  testServer(server, {
+    session$setInputs(vars_radar = c("mpg", "disp", "hp", "wt"),
+                      radar_clusters = 8, radar_min_deg = 10,
+                      radar_sd = TRUE, radar_rounded = FALSE)
+    expect_error(output$coradar_plot)
+  })
+})
+
 test_that("co-radar plot requires at least 3 variables", {
   server <- server_VisXplore(mtcars[, 1:5])
   testServer(server, {

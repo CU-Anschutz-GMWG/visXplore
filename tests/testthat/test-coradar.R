@@ -141,6 +141,43 @@ test_that("coradar rejects bad input", {
   expect_error(coradar("not a df"), "data.frame")
 })
 
+test_that("coradar handles constant columns without erroring", {
+  set.seed(1)
+  df <- data.frame(a = rnorm(20), b = rnorm(20), c = rnorm(20), z = rep(1, 20))
+  expect_message(cr <- coradar(df), "Constant")
+  expect_s3_class(cr, "visx_coradar")
+  # a constant variable normalizes to the mid-radius and places on the layout
+  expect_equal(unique(cr$data_scaled$z), 0.5)
+  expect_true("z" %in% names(cr$positions))
+})
+
+test_that("coradar validates cluster count against distinct rows", {
+  df <- mtcars[1:5, c("mpg", "disp", "hp", "wt")]
+  expect_error(coradar(df, groups = 8), "distinct")
+})
+
+test_that("coradar errors on a cor_matrix without row names", {
+  vars <- c("mpg", "disp", "hp", "wt")
+  cm <- cor(mtcars[vars], method = "spearman")
+  rownames(cm) <- NULL
+  # colnames alone are enough (rownames restored from colnames)
+  expect_s3_class(coradar(mtcars, vars = vars, cor_matrix = cm), "visx_coradar")
+  # but a matrix missing a variable is rejected informatively
+  cm2 <- cor(mtcars[c("mpg", "disp", "hp")], method = "spearman")
+  expect_error(coradar(mtcars, vars = vars, cor_matrix = cm2), "wt")
+})
+
+test_that("coradar records how groups were formed", {
+  vars <- c("mpg", "disp", "hp", "wt")
+  expect_equal(coradar(mtcars, vars = vars)$group_source, "overall")
+  expect_equal(coradar(mtcars, vars = vars, groups = "am")$group_source, "column")
+  grp <- rep(c("A", "B"), length.out = nrow(mtcars))
+  expect_equal(coradar(mtcars, vars = vars, groups = grp)$group_source,
+               "assignment")
+  set.seed(1)
+  expect_equal(coradar(mtcars, vars = vars, groups = 2)$group_source, "kmeans")
+})
+
 ##### print and plot methods #####
 
 test_that("print.visx_coradar summarizes the object", {
@@ -149,6 +186,18 @@ test_that("print.visx_coradar summarizes the object", {
   expect_identical(ret, cr)
   expect_true(any(grepl("4 variables", out)))
   expect_true(any(grepl("am", out)))
+})
+
+test_that("print distinguishes supplied assignments from k-means", {
+  vars <- c("mpg", "disp", "hp", "wt")
+  grp <- rep(c("A", "B"), length.out = nrow(mtcars))
+  out <- capture.output(print(coradar(mtcars, vars = vars, groups = grp)))
+  expect_true(any(grepl("supplied assignment", out)))
+  expect_false(any(grepl("k-means", out)))
+
+  set.seed(1)
+  out2 <- capture.output(print(coradar(mtcars, vars = vars, groups = 2)))
+  expect_true(any(grepl("k-means", out2)))
 })
 
 test_that("plot.visx_coradar returns a ggplot", {
@@ -164,6 +213,25 @@ test_that("plot.visx_coradar overlays individuals by index and data.frame", {
   expect_s3_class(plot(cr, individuals = mtcars[2, ]), "ggplot")
   expect_error(plot(cr, individuals = 999), "out of range")
   expect_error(plot(cr, individuals = mtcars[2, c("mpg", "disp")]), "missing")
+})
+
+test_that("out-of-range individual values are clamped, not reflected", {
+  cr <- coradar(mtcars, vars = c("mpg", "disp", "hp", "wt"))
+  newobs <- mtcars[1, ]
+  newobs$mpg <- 5  # below observed minimum (10.4)
+  expect_warning(scaled <- individuals_scaled(cr, newobs), "clamped")
+  expect_gte(scaled$mpg, 0)
+  expect_lte(scaled$mpg, 1)
+})
+
+test_that("individuals overlay works with non-syntactic column names", {
+  set.seed(1)
+  df <- data.frame(`my var` = rnorm(20), b = rnorm(20), c = rnorm(20),
+                   check.names = FALSE)
+  cr <- coradar(df)
+  expect_identical(names(cr$data_scaled), c("my var", "b", "c"))
+  expect_s3_class(plot(cr, individuals = 1), "ggplot")
+  expect_s3_class(plot(cr, individuals = df[2, ]), "ggplot")
 })
 
 test_that("plot.visx_coradar highlight validates variable names", {

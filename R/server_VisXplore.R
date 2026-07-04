@@ -19,8 +19,14 @@ server_VisXplore <- function(data) {
     # upload data
     bl_df <- reactive(data)
 
+    # initial variable types; integer columns count as numeric (matching
+    # pairwise_cor()'s type guessing) so they are not dropped from the
+    # numeric-only tabs
+    init_var_type <- vapply(data, function(col) class(col)[1], character(1))
+    init_var_type[init_var_type == "integer"] <- "numeric"
+
     # list of all reactive datasets
-    df_lst <- reactiveValues(df_all=data, var_type=sapply(data, class),
+    df_lst <- reactiveValues(df_all=data, var_type=init_var_type,
                              df_new_num=NULL, new_type_num=NULL,
                              df_new_cat=NULL, new_type_cat=NULL)
 
@@ -90,9 +96,9 @@ server_VisXplore <- function(data) {
                  })
 
     output$num_vars <- renderPlot({
-      df_plot <- df_lst$df_all[, df_lst$var_type=="numeric"]
+      df_plot <- df_lst$df_all[, df_lst$var_type=="numeric", drop = FALSE]
 
-      if(nrow(df_plot)>0){
+      if(ncol(df_plot)>0){
         df_plot <- mutate(df_plot, across(everything(), as.numeric))
         make_hist(df_plot)
       }
@@ -178,7 +184,7 @@ server_VisXplore <- function(data) {
     })
 
     output$coradar_plot <- renderPlot({
-      req(input$vars_radar)
+      req(input$vars_radar, input$radar_clusters)
       validate(need(length(input$vars_radar) >= 3,
                     "Select at least 3 numeric variables."))
       df_sub <- df_lst$df_all[, input$vars_radar, drop = FALSE]
@@ -186,10 +192,17 @@ server_VisXplore <- function(data) {
 
       k <- input$radar_clusters
       groups <- if (!is.na(k) && k > 1) as.integer(k) else NULL
-      # fixed seed so the k-means archetypes are stable across re-renders
-      if (!is.null(groups)) set.seed(1)
-      cr <- suppressMessages(coradar(df_sub, groups = groups,
-                                     min_degrees = input$radar_min_deg))
+      if (!is.null(groups)) {
+        n_distinct <- nrow(unique(df_sub[stats::complete.cases(df_sub), , drop = FALSE]))
+        validate(need(groups <= n_distinct,
+                      paste0("Requested ", groups, " archetypes but only ",
+                             n_distinct, " distinct complete rows are available.")))
+      }
+      # fixed seed so the k-means archetypes are stable across re-renders,
+      # scoped so it does not disturb the user's session RNG state
+      cr <- withr::with_seed(1,
+        suppressMessages(coradar(df_sub, groups = groups,
+                                 min_degrees = input$radar_min_deg)))
       plot(cr, sd_band = input$radar_sd,
            rounded = isTRUE(input$radar_rounded))
     }, height = 700, width = 750)

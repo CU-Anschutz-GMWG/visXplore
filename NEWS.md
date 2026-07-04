@@ -18,6 +18,28 @@
   Estrogen/Progestin Replacement Study (2763 women, 29 variables), used as
   the co-radar example in the README and `coradar()` documentation
 
+## Bug fixes
+- `coradar()` no longer errors on constant (zero-variance) numeric columns;
+  they are treated as uncorrelated on the layout and reported in a message
+- Individual overlays whose values fall outside the training range are now
+  clamped to the axis bounds (with a warning) instead of mapping to a
+  negative radius that reflected the vertex through the plot origin
+- `coradar()` and the individuals overlay preserve non-syntactic column
+  names (e.g. names with spaces), which previously broke the overlay
+- `coradar()` accepts a `cor_matrix` with column names but no row names, and
+  gives a clearer error when a plotted variable is missing from it
+- `coradar()` errors early and informatively when more k-means clusters are
+  requested than there are distinct observations
+- `print.visx_coradar()` now correctly reports the archetype source
+  (column, supplied assignment, or k-means) instead of always saying k-means
+- Shiny app: integer-typed columns are now offered on the numeric tabs
+  (Numeric variables and Co-radar) instead of being silently dropped
+- Shiny app: the Numeric variables tab no longer crashes on datasets with
+  exactly one or zero numeric columns
+- Shiny app: the Co-radar tab validates the requested archetype count and
+  seeds k-means with `withr::with_seed()` so it no longer disturbs the
+  session-global RNG
+
 # VisXplore 2.2.0
 
 ## Co-radar plots
