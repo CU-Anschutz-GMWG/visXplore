@@ -161,7 +161,7 @@ previous version. In this new diagram, measure and test of
 association/correlation between a pair of variables is determined by
 their types, specifically as follows:
 
-- nominal vs numeric, nominal or ordinal: Pseudo $R^{2}$ and p value
+- nominal vs numeric, nominal or ordinal: Pseudo $`R^2`$ and p value
   from univariate multinomial regression
 - ordinal vs ordinal or numeric: GK gamma and GK gamma correlation test
 - numeric vs numeric: Spearman correlation and Spearman correlation test
@@ -185,7 +185,7 @@ correlation/association measures. The directional ones (Spearman and
 GKgamma correaltion) are represented by pink-blue scale, since their
 values can be either negative or positive. For the indirectional
 association, please note that PseudoR, which is the square-root of
-Pseudo $R^{2}$, is used so that it is comparable to other correlation
+Pseudo $`R^2`$, is used so that it is comparable to other correlation
 measures. This measure is represened by the orange color scale.
 
 Other features remain similar to the previous version, where color hue,

@@ -16,6 +16,7 @@ You can install the development version of VisXplore from
 [GitHub](https://github.com/) with:
 
 ``` r
+
 # install.packages("devtools")
 devtools::install_github("CU-Anschutz-GMWG/VisXplore")
 ```
@@ -34,6 +35,7 @@ frame. The association measure depends on the variable types involved:
 | Ordinal vs. ordinal/numeric | Goodman-Kruskal gamma                     |
 
 ``` r
+
 library(VisXplore)
 result <- pairwise_cor(mtcars)
 result
@@ -47,6 +49,7 @@ Use [`summary()`](https://rdrr.io/r/base/summary.html) to view the full
 association matrix with significance stars:
 
 ``` r
+
 summary(result)
 #> Correlation/Association Matrix
 #> Significance: **** p<0.0001, *** p<0.001, ** p<0.01, * p<0.05
@@ -81,6 +84,7 @@ dissimilarity matrix (`1 - |association|`), and edges represent
 associations above a minimum threshold:
 
 ``` r
+
 plot(result, min_cor = 0.3)
 ```
 
@@ -90,10 +94,73 @@ You can also customize the network plot directly with
 [`npc_mixed_cor()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/npc_mixed_cor.md):
 
 ``` r
+
 npc_mixed_cor(result, min_cor = 0.5, show_signif = TRUE, label_size = 4)
 ```
 
 ![](reference/figures/README-custom-plot-1.png)
+
+## Co-radar plots
+
+Traditional radar (spider) plots order their axes arbitrarily, which
+changes the shapes they display.
+[`coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/coradar.md)
+places axes by the correlation structure of the data instead — strongly
+associated variables point in similar directions, so shapes are
+interpretable and stable. Each axis spans the observed range of its
+variable, the polygon traces group means, and the shaded band shows ±
+half a standard deviation.
+
+The bundled `hers` dataset (baseline measurements from the Heart and
+Estrogen/Progestin Replacement Study) has exactly the kind of rich,
+correlated clinical variables co-radar plots are built for:
+
+``` r
+
+vars <- c("age", "physact", "globrat", "weight", "BMI", "waist",
+          "WHR", "LDL", "HDL", "SBP", "DBP")
+radar <- coradar(hers, vars = vars, min_degrees = 7)
+#> Removed 23 rows with missing values.
+radar
+#> Co-radar plot of 11 variables, 2740 observations
+#> Normalization: minmax 
+#> 
+#> Axis positions (degrees):
+#>     age     SBP     LDL globrat physact     HDL     BMI   waist  weight     WHR 
+#>       0      15      39      55      88     145     204     211     221     250 
+#>     DBP 
+#>     319
+plot(radar, rounded = TRUE)
+```
+
+![](reference/figures/README-coradar-1.png)
+
+The adiposity measures (`weight`, `BMI`, `waist`, `WHR`) collapse onto a
+shared direction, and `HDL` sits roughly opposite them — reflecting its
+inverse relationship with body fat — structure that an arbitrary axis
+ordering would hide.
+
+Pair it with unsupervised learning to compare patient *archetypes*: pass
+a grouping column or a number of k-means clusters. Here two archetypes
+emerge, separated mainly by physical activity and self-rated health
+(high in one) versus adiposity (higher in the other), while blood
+pressure and age barely differ:
+
+``` r
+
+set.seed(1)
+plot(coradar(hers, vars = vars, groups = 2, min_degrees = 7), rounded = TRUE)
+#> Removed 23 rows with missing values.
+```
+
+![](reference/figures/README-coradar-archetypes-1.png)
+
+Overlay individual patients with `plot(radar, individuals = ...)`,
+emphasize model-selected variables with `plot(radar, highlight = ...)`,
+or draw straight-edged polygons by omitting `rounded = TRUE`. Axis
+placement can reuse a
+[`pairwise_cor()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/pairwise_cor.md)
+result via the `cor_matrix` argument.
 
 ## Mixed variable types
 
@@ -101,6 +168,7 @@ When your data includes factor or ordinal variables, specify the types
 explicitly:
 
 ``` r
+
 types <- c("numeric", "factor", rep("numeric", 5), rep("factor", 2),
            rep("ordinal", 2))
 result_mixed <- pairwise_cor(mtcars, types)
@@ -118,6 +186,7 @@ Use
 to identify empty or zero-variance columns before analysis:
 
 ``` r
+
 df <- data.frame(x = rnorm(10), y = 1, z = NA)
 data_check(df)
 #> Warning: z missing for all observations
@@ -127,10 +196,11 @@ data_check(df)
 ## Interactive Shiny app
 
 For point-and-click exploration, launch the built-in Shiny app. It
-provides tabs for the network plot, variable distributions, correlation
-matrix, summary statistics, and data transformations:
+provides tabs for the network plot, variable distributions, co-radar
+plot, correlation matrix, summary statistics, and data transformations:
 
 ``` r
+
 VisXplore(mtcars)
 ```
 

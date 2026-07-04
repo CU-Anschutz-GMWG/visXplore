@@ -71,15 +71,15 @@ type1 <- c("numeric", "factor", "ordinal")
 result <- pairwise_cor(data1, type1)
 result
 #> Pairwise associations for 3 variables (1 numeric, 1 factor, 1 ordinal)
-#> 1 of 3 pairs significant at p < 0.05
+#> 0 of 3 pairs significant at p < 0.05
 #> 
 #> Variables: x, y, z 
 summary(result)
 #> Correlation/Association Matrix
 #> Significance: **** p<0.0001, *** p<0.001, ** p<0.01, * p<0.05
 #> 
-#>          y        z
-#> x 0.34     0.28*   
-#> y          0.05    
+#>          y         z
+#> x 0.12     -0.08    
+#> y           0.43    
 #> 
 ```

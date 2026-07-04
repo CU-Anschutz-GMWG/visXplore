@@ -1,5 +1,103 @@
 # Changelog
 
+## VisXplore 2.3.0
+
+### Co-radar improvements
+
+- New `rounded` option in
+  [`plot.visx_coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/plot.visx_coradar.md):
+  archetype shapes, variability bands, and individual overlays are drawn
+  as rounded closed curves instead of straight-edged polygons. The
+  radius changes monotonically between adjacent axes — equal values
+  trace a perfect circular arc and the curve never moves opposite to the
+  net direction within a segment — with slopes intentionally
+  discontinuous at each axis
+- Fixed the variability band not covering the sector between the last
+  and first axes; bands are now drawn as true annuli (outer and inner
+  boundaries as polygon subgroups with even-odd fill)
+- Added a “Rounded shapes” checkbox to the Shiny co-radar tab
+
+### Data
+
+- New bundled `hers` dataset: baseline measurements from the Heart and
+  Estrogen/Progestin Replacement Study (2763 women, 29 variables), used
+  as the co-radar example in the README and
+  [`coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/coradar.md)
+  documentation
+
+### Bug fixes
+
+- [`coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/coradar.md)
+  no longer errors on constant (zero-variance) numeric columns; they are
+  treated as uncorrelated on the layout and reported in a message
+- Individual overlays whose values fall outside the training range are
+  now clamped to the axis bounds (with a warning) instead of mapping to
+  a negative radius that reflected the vertex through the plot origin
+- [`coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/coradar.md)
+  and the individuals overlay preserve non-syntactic column names
+  (e.g. names with spaces), which previously broke the overlay
+- [`coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/coradar.md)
+  accepts a `cor_matrix` with column names but no row names, and gives a
+  clearer error when a plotted variable is missing from it
+- [`coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/coradar.md)
+  errors early and informatively when more k-means clusters are
+  requested than there are distinct observations
+- [`print.visx_coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/print.visx_coradar.md)
+  now correctly reports the archetype source (column, supplied
+  assignment, or k-means) instead of always saying k-means
+- Shiny app: integer-typed columns are now offered on the numeric tabs
+  (Numeric variables and Co-radar) instead of being silently dropped
+- Shiny app: the Numeric variables tab no longer crashes on datasets
+  with exactly one or zero numeric columns
+- Shiny app: the Co-radar tab validates the requested archetype count
+  and seeds k-means with
+  [`withr::with_seed()`](https://withr.r-lib.org/reference/with_seed.html)
+  so it no longer disturbs the session-global RNG
+
+## VisXplore 2.2.0
+
+### Co-radar plots
+
+- New
+  [`coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/coradar.md)
+  function creates correlation-based radar plots: axis angles are set by
+  the association structure of the data (via a force-directed layout),
+  so strongly correlated variables point in similar directions and the
+  arbitrary axis ordering of traditional radar plots is resolved
+- Returns a `visx_coradar` S3 object with
+  [`print()`](https://rdrr.io/r/base/print.html) and
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) methods
+- Archetype support: summarize the whole sample, groups defined by a
+  column, or k-means clusters as mean shapes with a shaded variability
+  band
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) options to
+  overlay individual observations (`individuals`) and to emphasize
+  model-selected axes (`highlight`)
+- Normalization options: min-max (default), rank (robust to skew), or
+  none
+- New
+  [`coradar_pos()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/coradar_pos.md)
+  exposes the axis-placement algorithm directly; accepts a plain
+  correlation matrix or a
+  [`pairwise_cor()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/pairwise_cor.md)
+  result, enforces a minimum angular separation between axes
+- The layout algorithm anneals from equidistant and MDS-derived starting
+  positions and refines with coordinate descent; it achieves lower
+  layout stress than the original prototype at a fraction of the runtime
+- New “Co-radar plot” tab in the Shiny app with variable selection,
+  k-means archetypes, minimum axis separation, and variability band
+  controls
+
+### Code improvements
+
+- Clearer matrix indexing in
+  [`corstars()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/corstars.md),
+  removed a redundant data copy in
+  [`get_r2()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/get_r2.md),
+  moved a constant alpha out of `aes()` in
+  [`npc_mixed_cor()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/npc_mixed_cor.md)
+- Fixed typos in the Shiny app Note tab
+
 ## VisXplore 2.1.0
 
 ### Shiny app improvements

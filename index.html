@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Visual interactive model selection • VisXplore</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Visual interactive model selection">
 <meta name="description" content="An accessible, user-friendly, interactive software application for guiding data processing and model selection. Supports data transformations with immediate visual feedback.">
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">VisXplore</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,20 +70,20 @@
 <col width="40%">
 <col width="59%">
 </colgroup>
-<thead><tr class="header">
+<thead><tr>
 <th>Variable pair</th>
 <th>Measure</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Numeric vs. numeric</td>
 <td>Spearman rho</td>
 </tr>
-<tr class="even">
+<tr>
 <td>Factor vs. any</td>
 <td>Pseudo R-squared (multinomial regression)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Ordinal vs. ordinal/numeric</td>
 <td>Goodman-Kruskal gamma</td>
 </tr>
@@ -128,17 +128,47 @@
 <p>Use <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> to generate a network plot where node positions are derived from MDS on the dissimilarity matrix (<code>1 - |association|</code>), and edges represent associations above a minimum threshold:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result</span>, min_cor <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-network-plot-1.png" width="100%"></p>
+<p><img src="reference/figures/README-network-plot-1.png" alt="" width="100%"></p>
 <p>You can also customize the network plot directly with <code><a href="reference/npc_mixed_cor.html">npc_mixed_cor()</a></code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/npc_mixed_cor.html">npc_mixed_cor</a></span><span class="op">(</span><span class="va">result</span>, min_cor <span class="op">=</span> <span class="fl">0.5</span>, show_signif <span class="op">=</span> <span class="cn">TRUE</span>, label_size <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-custom-plot-1.png" width="100%"></p>
+<p><img src="reference/figures/README-custom-plot-1.png" alt="" width="100%"></p>
+</div>
+<div class="section level2">
+<h2 id="co-radar-plots">Co-radar plots<a class="anchor" aria-label="anchor" href="#co-radar-plots"></a>
+</h2>
+<p>Traditional radar (spider) plots order their axes arbitrarily, which changes the shapes they display. <code><a href="reference/coradar.html">coradar()</a></code> places axes by the correlation structure of the data instead — strongly associated variables point in similar directions, so shapes are interpretable and stable. Each axis spans the observed range of its variable, the polygon traces group means, and the shaded band shows ± half a standard deviation.</p>
+<p>The bundled <code>hers</code> dataset (baseline measurements from the Heart and Estrogen/Progestin Replacement Study) has exactly the kind of rich, correlated clinical variables co-radar plots are built for:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">vars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"physact"</span>, <span class="st">"globrat"</span>, <span class="st">"weight"</span>, <span class="st">"BMI"</span>, <span class="st">"waist"</span>,</span>
+<span>          <span class="st">"WHR"</span>, <span class="st">"LDL"</span>, <span class="st">"HDL"</span>, <span class="st">"SBP"</span>, <span class="st">"DBP"</span><span class="op">)</span></span>
+<span><span class="va">radar</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/coradar.html">coradar</a></span><span class="op">(</span><span class="va">hers</span>, vars <span class="op">=</span> <span class="va">vars</span>, min_degrees <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Removed 23 rows with missing values.</span></span>
+<span><span class="va">radar</span></span>
+<span><span class="co">#&gt; Co-radar plot of 11 variables, 2740 observations</span></span>
+<span><span class="co">#&gt; Normalization: minmax </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Axis positions (degrees):</span></span>
+<span><span class="co">#&gt;     age     SBP     LDL globrat physact     HDL     BMI   waist  weight     WHR </span></span>
+<span><span class="co">#&gt;       0      15      39      55      88     145     204     211     221     250 </span></span>
+<span><span class="co">#&gt;     DBP </span></span>
+<span><span class="co">#&gt;     319</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">radar</span>, rounded <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-coradar-1.png" alt="" width="100%"></p>
+<p>The adiposity measures (<code>weight</code>, <code>BMI</code>, <code>waist</code>, <code>WHR</code>) collapse onto a shared direction, and <code>HDL</code> sits roughly opposite them — reflecting its inverse relationship with body fat — structure that an arbitrary axis ordering would hide.</p>
+<p>Pair it with unsupervised learning to compare patient <em>archetypes</em>: pass a grouping column or a number of k-means clusters. Here two archetypes emerge, separated mainly by physical activity and self-rated health (high in one) versus adiposity (higher in the other), while blood pressure and age barely differ:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="reference/coradar.html">coradar</a></span><span class="op">(</span><span class="va">hers</span>, vars <span class="op">=</span> <span class="va">vars</span>, groups <span class="op">=</span> <span class="fl">2</span>, min_degrees <span class="op">=</span> <span class="fl">7</span><span class="op">)</span>, rounded <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Removed 23 rows with missing values.</span></span></code></pre></div>
+<p><img src="reference/figures/README-coradar-archetypes-1.png" alt="" width="100%"></p>
+<p>Overlay individual patients with <code>plot(radar, individuals = ...)</code>, emphasize model-selected variables with <code>plot(radar, highlight = ...)</code>, or draw straight-edged polygons by omitting <code>rounded = TRUE</code>. Axis placement can reuse a <code><a href="reference/pairwise_cor.html">pairwise_cor()</a></code> result via the <code>cor_matrix</code> argument.</p>
 </div>
 <div class="section level2">
 <h2 id="mixed-variable-types">Mixed variable types<a class="anchor" aria-label="anchor" href="#mixed-variable-types"></a>
 </h2>
 <p>When your data includes factor or ordinal variables, specify the types explicitly:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">types</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"numeric"</span>, <span class="st">"factor"</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"numeric"</span>, <span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"factor"</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>           <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"ordinal"</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">result_mixed</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pairwise_cor.html">pairwise_cor</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="va">types</span><span class="op">)</span></span>
@@ -152,7 +182,7 @@
 <h2 id="data-quality-checks">Data quality checks<a class="anchor" aria-label="anchor" href="#data-quality-checks"></a>
 </h2>
 <p>Use <code><a href="reference/data_check.html">data_check()</a></code> to identify empty or zero-variance columns before analysis:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>, y <span class="op">=</span> <span class="fl">1</span>, z <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/data_check.html">data_check</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: z missing for all observations</span></span>
@@ -161,8 +191,8 @@
 <div class="section level2">
 <h2 id="interactive-shiny-app">Interactive Shiny app<a class="anchor" aria-label="anchor" href="#interactive-shiny-app"></a>
 </h2>
-<p>For point-and-click exploration, launch the built-in Shiny app. It provides tabs for the network plot, variable distributions, correlation matrix, summary statistics, and data transformations:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p>For point-and-click exploration, launch the built-in Shiny app. It provides tabs for the network plot, variable distributions, co-radar plot, correlation matrix, summary statistics, and data transformations:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/VisXplore.html">VisXplore</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
