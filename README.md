@@ -206,3 +206,11 @@ to below:
 
 [![VisXplore
 video](https://img.youtube.com/vi/aZfLty00Mrc/0.jpg)](https://www.youtube.com/watch?v=aZfLty00Mrc)
+
+## Acknowledgments
+
+VisXplore grew out of the original **VisX** package by Ying Jin, Ryan
+Peterson, and Carsten Görg
+([yingljin/VisX](https://github.com/yingljin/VisX)), whose work
+established the mixed-type association engine and the interactive Shiny
+workflow at the core of this package.
