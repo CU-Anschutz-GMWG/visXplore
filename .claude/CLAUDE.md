@@ -56,6 +56,9 @@ All source is in `R/`:
 - **`npc_mixed_cor.R`** — Network plot visualization using MDS coordinates from the dissimilarity matrix, with dual color scales
 - **`globals.R`** — `utils::globalVariables()` declarations for NSE, plus internal `nagelkerke_r2()` (see Key Design Decisions)
 
+### Data
+- **`R/data.R`** documents the bundled `hers` dataset (`data/hers.rda`); regenerate it with `data-raw/hers.R` (reads the gitignored `archive/coradar/hers_data.rds`). Both `archive/` and `data-raw/` are in `.Rbuildignore`.
+
 ### Shiny App
 - **`launch_VisXplore.R`** — `VisXplore()` entry point (plus deprecated `VisX()` alias)
 - **`ui_VisX.R`** — UI definition with tabs: Network Plot, Numeric/Categorical variables, Co-radar plot, Correlation matrix, Statistics, Data, Code, Note

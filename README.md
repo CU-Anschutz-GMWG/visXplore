@@ -111,43 +111,55 @@ correlation structure of the data instead — strongly associated
 variables point in similar directions, so shapes are interpretable and
 stable. Each axis spans the observed range of its variable, the polygon
 traces group means, and the shaded band shows ± half a standard
-deviation:
+deviation.
+
+The bundled `hers` dataset (baseline measurements from the Heart and
+Estrogen/Progestin Replacement Study) has exactly the kind of rich,
+correlated clinical variables co-radar plots are built for:
 
 ``` r
-radar <- coradar(mtcars, vars = c("mpg", "disp", "hp", "drat", "wt", "qsec"),
-                 min_degrees = 20)
+vars <- c("age", "physact", "globrat", "weight", "BMI", "waist",
+          "WHR", "LDL", "HDL", "SBP", "DBP")
+radar <- coradar(hers, vars = vars, min_degrees = 7)
+#> Removed 23 rows with missing values.
 radar
-#> Co-radar plot of 6 variables, 32 observations
+#> Co-radar plot of 11 variables, 2740 observations
 #> Normalization: minmax 
 #> 
 #> Axis positions (degrees):
-#>  mpg disp   wt drat qsec   hp 
-#>    0   20   40   74  272  340
-plot(radar)
+#>     age     SBP     LDL globrat physact     HDL     BMI   waist  weight     WHR 
+#>       0      15      39      55      88     145     204     211     221     250 
+#>     DBP 
+#>     319
+plot(radar, rounded = TRUE)
 ```
 
 <img src="man/figures/README-coradar-1.png" alt="" width="100%" />
 
-Here the tight cluster of axes (`mpg`, `disp`, `wt`, `hp`) immediately
-shows those variables move together (`min_degrees` keeps tightly
-correlated axes readable).
+The adiposity measures (`weight`, `BMI`, `waist`, `WHR`) collapse onto a
+shared direction, and `HDL` sits roughly opposite them — reflecting its
+inverse relationship with body fat — structure that an arbitrary axis
+ordering would hide.
 
-Pair it with unsupervised learning to compare patient/observation
-*archetypes*: pass a grouping column or a number of k-means clusters:
+Pair it with unsupervised learning to compare patient *archetypes*: pass
+a grouping column or a number of k-means clusters. Here two archetypes
+emerge, separated mainly by physical activity and self-rated health
+(high in one) versus adiposity (higher in the other), while blood
+pressure and age barely differ:
 
 ``` r
 set.seed(1)
-plot(coradar(mtcars, vars = c("mpg", "disp", "hp", "drat", "wt", "qsec"),
-             groups = 2, min_degrees = 20))
+plot(coradar(hers, vars = vars, groups = 2, min_degrees = 7), rounded = TRUE)
+#> Removed 23 rows with missing values.
 ```
 
 <img src="man/figures/README-coradar-archetypes-1.png" alt="" width="100%" />
 
-Overlay individual observations with `plot(radar, individuals = ...)`,
+Overlay individual patients with `plot(radar, individuals = ...)`,
 emphasize model-selected variables with `plot(radar, highlight = ...)`,
-or draw smooth curves instead of straight-edged polygons with
-`plot(radar, rounded = TRUE)`. Axis placement can reuse a
-`pairwise_cor()` result via the `cor_matrix` argument.
+or draw straight-edged polygons by omitting `rounded = TRUE`. Axis
+placement can reuse a `pairwise_cor()` result via the `cor_matrix`
+argument.
 
 ## Mixed variable types
 

@@ -13,6 +13,11 @@
   boundaries as polygon subgroups with even-odd fill)
 - Added a "Rounded shapes" checkbox to the Shiny co-radar tab
 
+## Data
+- New bundled `hers` dataset: baseline measurements from the Heart and
+  Estrogen/Progestin Replacement Study (2763 women, 29 variables), used as
+  the co-radar example in the README and `coradar()` documentation
+
 # VisXplore 2.2.0
 
 ## Co-radar plots
