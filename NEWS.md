@@ -1,4 +1,18 @@
 
+# VisXplore 2.3.0
+
+## Co-radar improvements
+- New `rounded` option in `plot.visx_coradar()`: archetype shapes,
+  variability bands, and individual overlays are drawn as rounded closed
+  curves instead of straight-edged polygons. The radius changes
+  monotonically between adjacent axes — equal values trace a perfect
+  circular arc and the curve never moves opposite to the net direction
+  within a segment — with slopes intentionally discontinuous at each axis
+- Fixed the variability band not covering the sector between the last and
+  first axes; bands are now drawn as true annuli (outer and inner
+  boundaries as polygon subgroups with even-odd fill)
+- Added a "Rounded shapes" checkbox to the Shiny co-radar tab
+
 # VisXplore 2.2.0
 
 ## Co-radar plots

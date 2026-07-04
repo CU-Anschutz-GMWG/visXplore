@@ -216,14 +216,15 @@ test_that("co-radar plot renders for selected variables", {
   })
 })
 
-test_that("co-radar plot supports k-means archetypes", {
+test_that("co-radar plot supports k-means archetypes and rounded shapes", {
   server <- server_VisXplore(mtcars[, 1:5])
   testServer(server, {
     session$setInputs(
       vars_radar = c("mpg", "cyl", "disp", "hp"),
       radar_clusters = 2,
       radar_min_deg = 10,
-      radar_sd = FALSE
+      radar_sd = FALSE,
+      radar_rounded = TRUE
     )
     expect_no_error(output$coradar_plot)
   })

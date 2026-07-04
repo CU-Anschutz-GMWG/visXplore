@@ -176,3 +176,48 @@ test_that("plots build without errors", {
   cr <- coradar(mtcars, vars = c("mpg", "disp", "hp", "wt"), groups = "am")
   expect_no_error(ggplot2::ggplot_build(plot(cr, individuals = 1)))
 })
+
+test_that("variability bands are full annuli (no gap at the wrap)", {
+  cr <- coradar(mtcars, vars = c("mpg", "disp", "hp", "wt"))
+  built <- ggplot2::ggplot_build(plot(cr))
+  # layer 3 is the band polygons (circles, spokes, bands, outline, labels)
+  band_data <- built$data[[3]]
+  expect_true("subgroup" %in% names(band_data))
+  rings <- table(band_data$group, band_data$subgroup)
+  # every band has an outer and an inner ring, one vertex per axis each
+  expect_true(all(rings == 4))
+})
+
+test_that("rounded plots build and pass through the axis values", {
+  cr <- coradar(mtcars, vars = c("mpg", "disp", "hp", "wt"), groups = "am")
+  expect_s3_class(plot(cr, rounded = TRUE), "ggplot")
+  expect_no_error(ggplot2::ggplot_build(plot(cr, rounded = TRUE,
+                                             individuals = 1)))
+
+  # the interpolated boundary hits each axis point and never overshoots
+  pos <- c(0, pi / 2, pi, 4)
+  r <- c(0.2, 1, 0.4, 0.7)
+  xy <- radar_outline(pos, r, rounded = TRUE)
+  radius <- sqrt(xy$x^2 + xy$y^2)
+  angle <- atan2(xy$y, xy$x) %% (2 * pi)
+  for (i in seq_along(pos)) {
+    j <- which.min(pmin(abs(angle - pos[i]), 2 * pi - abs(angle - pos[i])))
+    expect_equal(radius[j], r[i], tolerance = 1e-6)
+  }
+  expect_true(all(radius <= max(r) + 1e-9))
+  expect_true(all(radius >= min(r) - 1e-9))
+
+  # the radius is monotone within each inter-axis segment
+  seg <- radius[angle > pi / 2 + 1e-9 & angle < pi - 1e-9]
+  expect_true(all(diff(seg) <= 1e-9))
+})
+
+test_that("rounded outline traces a circular arc between equal values", {
+  pos <- c(0, pi / 2, pi, 3 * pi / 2)
+  r <- c(0.5, 0.5, 0.8, 0.5)
+  xy <- radar_outline(pos, r, rounded = TRUE)
+  radius <- sqrt(xy$x^2 + xy$y^2)
+  angle <- atan2(xy$y, xy$x) %% (2 * pi)
+  arc <- radius[angle >= 0 & angle <= pi / 2]
+  expect_equal(arc, rep(0.5, length(arc)), tolerance = 1e-9)
+})

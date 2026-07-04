@@ -4,7 +4,7 @@ utils::globalVariables(c(
   "type", "x", "y", "xend", "yend", "id",  # npc_mixed_cor
   "proximity", "sign", "var_type",          # npc_mixed_cor
   "ave", "sd",                              # make_hist
-  "lx", "ly", "variable", "poly_id", "group"  # plot.visx_coradar
+  "lx", "ly", "variable", "poly_id", "group", "ring"  # plot.visx_coradar
 ))
 
 

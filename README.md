@@ -144,8 +144,9 @@ plot(coradar(mtcars, vars = c("mpg", "disp", "hp", "drat", "wt", "qsec"),
 <img src="man/figures/README-coradar-archetypes-1.png" alt="" width="100%" />
 
 Overlay individual observations with `plot(radar, individuals = ...)`,
-or emphasize model-selected variables with
-`plot(radar, highlight = ...)`. Axis placement can reuse a
+emphasize model-selected variables with `plot(radar, highlight = ...)`,
+or draw smooth curves instead of straight-edged polygons with
+`plot(radar, rounded = TRUE)`. Axis placement can reuse a
 `pairwise_cor()` result via the `cor_matrix` argument.
 
 ## Mixed variable types

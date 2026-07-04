@@ -61,7 +61,9 @@ ui <- function(request){
                                                  "Minimum axis separation (degrees)",
                                                  min = 0, max = 30, value = 10),
                                      checkboxInput("radar_sd", "Show variability band",
-                                                   value = TRUE)
+                                                   value = TRUE),
+                                     checkboxInput("radar_rounded", "Rounded shapes",
+                                                   value = FALSE)
                     ),
 
                     # panel for statistics input

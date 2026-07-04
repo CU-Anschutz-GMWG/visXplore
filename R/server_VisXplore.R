@@ -190,7 +190,8 @@ server_VisXplore <- function(data) {
       if (!is.null(groups)) set.seed(1)
       cr <- suppressMessages(coradar(df_sub, groups = groups,
                                      min_degrees = input$radar_min_deg))
-      plot(cr, sd_band = input$radar_sd)
+      plot(cr, sd_band = input$radar_sd,
+           rounded = isTRUE(input$radar_rounded))
     }, height = 700, width = 750)
 
     output$cormat <-  renderText({

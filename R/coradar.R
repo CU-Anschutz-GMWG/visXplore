@@ -376,6 +376,14 @@ print.visx_coradar <- function(x, ...) {
 #' @param sd_band if TRUE (default), shade a band of \code{mean +/- band_width * sd / 2}
 #'  around each archetype
 #' @param band_width multiplier for the width of the variability band (default 1)
+#' @param rounded if TRUE, draw archetype shapes, variability bands, and
+#'  individual overlays as rounded closed curves instead of straight-edged
+#'  polygons. Between adjacent axes the radius changes monotonically (equal
+#'  values trace a perfect circular arc, and the curve never moves opposite
+#'  to the net direction), with slopes allowed to change abruptly at each
+#'  axis. Useful when correlated axes occupy a narrow arc: the segment closing
+#'  a straight polygon (last axis back to the first) cuts across the plot,
+#'  while a rounded shape sweeps around it
 #' @param individuals optional individual observations to overlay as black
 #'  polygons: either row indices into the (complete-case) data, or a data.frame
 #'  of raw values containing the plotted variables (normalized to the scale of
@@ -392,10 +400,12 @@ print.visx_coradar <- function(x, ...) {
 #' result <- coradar(mtcars, vars = c("mpg", "disp", "hp", "drat", "wt", "qsec"))
 #' plot(result, individuals = 1)
 #' plot(result, highlight = c("mpg", "wt"))
+#' plot(result, rounded = TRUE)
 #'
 #' @import ggplot2
 #' @export
 plot.visx_coradar <- function(x, sd_band = TRUE, band_width = 1,
+                              rounded = FALSE,
                               individuals = NULL, highlight = NULL,
                               label_size = 4, legend = TRUE, ...) {
   theta <- x$positions
@@ -422,10 +432,7 @@ plot.visx_coradar <- function(x, sd_band = TRUE, band_width = 1,
     emphasized = if (is.null(highlight)) TRUE else vars %in% highlight
   )
 
-  # archetype polygons (vertices in angular order; geom_polygon closes them)
   shape <- x$stats[order(x$stats$group, x$stats$pos), ]
-  shape$x <- shape$mean * cos(shape$pos)
-  shape$y <- shape$mean * sin(shape$pos)
 
   p <- ggplot() +
     geom_path(data = circles, aes(x, y, group = id),
@@ -435,30 +442,37 @@ plot.visx_coradar <- function(x, sd_band = TRUE, band_width = 1,
                  color = ifelse(axes$emphasized, "grey40", "grey85"),
                  linewidth = ifelse(axes$emphasized, 0.4, 0.3))
 
-  # variability bands: nested translucent rings whose overlap fades the
-  # shading with distance from the mean shape
+  # variability bands: nested translucent annuli whose overlap fades the
+  # shading with distance from the mean shape. Outer and inner boundaries are
+  # separate subgroups so even-odd filling leaves the hole open and covers the
+  # full circuit (including the sector between the last and first axes)
   if (sd_band) {
     band_alpha <- 1 - (1 - 0.35)^(1 / n_bands)
     bands <- do.call(rbind, lapply(split(shape, shape$group), function(s) {
       hw <- band_width * ifelse(is.na(s$sd), 0, s$sd) / 2
       do.call(rbind, lapply(seq_len(n_bands), function(j) {
         f <- j / n_bands
-        outer_r <- s$mean + f * hw
-        inner_r <- pmax(s$mean - f * hw, 0)
+        outer_xy <- radar_outline(s$pos, s$mean + f * hw, rounded)
+        inner_xy <- radar_outline(s$pos, pmax(s$mean - f * hw, 0), rounded)
         data.frame(
           group = s$group[1],
           poly_id = paste(s$group[1], j),
-          x = c(outer_r * cos(s$pos), rev(inner_r * cos(s$pos))),
-          y = c(outer_r * sin(s$pos), rev(inner_r * sin(s$pos)))
+          ring = rep(1:2, c(nrow(outer_xy), nrow(inner_xy))),
+          rbind(outer_xy, inner_xy)
         )
       }))
     }))
     p <- p + geom_polygon(data = bands,
-                          aes(x, y, group = poly_id, fill = group),
+                          aes(x, y, group = poly_id, subgroup = ring,
+                              fill = group),
                           alpha = band_alpha, color = NA)
   }
 
-  p <- p + geom_polygon(data = shape,
+  # archetype mean shapes
+  outlines <- do.call(rbind, lapply(split(shape, shape$group), function(s) {
+    data.frame(group = s$group[1], radar_outline(s$pos, s$mean, rounded))
+  }))
+  p <- p + geom_polygon(data = outlines,
                         aes(x, y, group = group, color = group),
                         fill = NA, linewidth = 1)
 
@@ -466,10 +480,8 @@ plot.visx_coradar <- function(x, sd_band = TRUE, band_width = 1,
   if (!is.null(individuals)) {
     ind <- individuals_scaled(x, individuals)
     ind_long <- do.call(rbind, lapply(seq_len(nrow(ind)), function(i) {
-      r <- unlist(ind[i, vars])[order(theta)]
       data.frame(poly_id = i,
-                 x = r * cos(sort(theta)),
-                 y = r * sin(sort(theta)))
+                 radar_outline(theta, unlist(ind[i, vars]), rounded))
     }))
     p <- p + geom_polygon(data = ind_long, aes(x, y, group = poly_id),
                           fill = NA, color = "black", linewidth = 0.6)
@@ -490,6 +502,42 @@ plot.visx_coradar <- function(x, sd_band = TRUE, band_width = 1,
 
   print(p)
   invisible(p)
+}
+
+
+#' Boundary points of a radar shape
+#'
+#' @param pos axis angles in radians (any order; paired with r)
+#' @param r radius at each axis
+#' @param rounded if TRUE, return a dense closed curve through the axis
+#'  points; otherwise just the vertices. Each inter-axis segment interpolates
+#'  the radius with a smoothstep (cubic Hermite with zero end-slopes), so the
+#'  curve is tangent to a circle at every axis: equal adjacent values trace a
+#'  perfect circular arc, and the radius moves strictly monotonically between
+#'  unequal values — it never reverses direction within a segment. Slopes are
+#'  intentionally not continuous across axes
+#' @return data.frame with columns x, y, ordered by angle
+#' @noRd
+radar_outline <- function(pos, r, rounded, n_dense = 361L) {
+  ord <- order(pos)
+  pos <- pos[ord]
+  r <- r[ord]
+  if (rounded) {
+    # close the loop and build each segment independently
+    pos_c <- c(pos, pos[1] + 2 * pi)
+    r_c <- c(r, r[1])
+    segs <- lapply(seq_along(pos), function(i) {
+      width <- pos_c[i + 1] - pos_c[i]
+      k <- max(2L, ceiling(width / (2 * pi) * n_dense))
+      tt <- seq(0, 1, length.out = k)
+      data.frame(pos = pos_c[i] + tt * width,
+                 r = r_c[i] + (r_c[i + 1] - r_c[i]) * (3 * tt^2 - 2 * tt^3))
+    })
+    segs <- do.call(rbind, segs)
+    pos <- segs$pos
+    r <- segs$r
+  }
+  data.frame(x = r * cos(pos), y = r * sin(pos))
 }
 
 

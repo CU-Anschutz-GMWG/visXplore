@@ -8,6 +8,7 @@
   x,
   sd_band = TRUE,
   band_width = 1,
+  rounded = FALSE,
   individuals = NULL,
   highlight = NULL,
   label_size = 4,
@@ -22,6 +23,15 @@
 around each archetype}
 
 \item{band_width}{multiplier for the width of the variability band (default 1)}
+
+\item{rounded}{if TRUE, draw archetype shapes, variability bands, and
+individual overlays as rounded closed curves instead of straight-edged
+polygons. Between adjacent axes the radius changes monotonically (equal
+values trace a perfect circular arc, and the curve never moves opposite
+to the net direction), with slopes allowed to change abruptly at each
+axis. Useful when correlated axes occupy a narrow arc: the segment closing
+a straight polygon (last axis back to the first) cuts across the plot,
+while a rounded shape sweeps around it}
 
 \item{individuals}{optional individual observations to overlay as black
 polygons: either row indices into the (complete-case) data, or a data.frame
@@ -49,5 +59,6 @@ within-group variability that fades with distance from the mean shape.
 result <- coradar(mtcars, vars = c("mpg", "disp", "hp", "drat", "wt", "qsec"))
 plot(result, individuals = 1)
 plot(result, highlight = c("mpg", "wt"))
+plot(result, rounded = TRUE)
 
 }
