@@ -17,7 +17,7 @@ display via plot().'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">VisXplore</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,7 @@ display via <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="
 <span>  groups <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  normalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"minmax"</span>, <span class="st">"rank"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  cor_matrix <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reference <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  min_degrees <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  max_iterations <span class="op">=</span> <span class="fl">500</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -106,8 +107,22 @@ Ordinal variables can be included by coding them as numeric first.</p></dd>
 
 <dt id="arg-cor-matrix">cor_matrix<a class="anchor" aria-label="anchor" href="#arg-cor-matrix"></a></dt>
 <dd><p>optional correlation/association matrix (or
-<code>visx_cor</code> object) used for axis placement; defaults to Spearman
-correlation of <code>vars</code></p></dd>
+<code>visx_cor</code> object) used for axis placement. Defaults to the Spearman
+correlation of <code>vars</code> in <code>reference</code> if supplied, otherwise in
+<code>data</code>. Use this to lay the axes out according to an association
+structure estimated elsewhere (a published matrix, or a reference cohort)</p></dd>
+
+
+<dt id="arg-reference">reference<a class="anchor" aria-label="anchor" href="#arg-reference"></a></dt>
+<dd><p>optional data.frame of external reference data containing
+<code>vars</code>, used to define the radial scale so that a given radius means
+the same thing across datasets. When <code>cor_matrix</code> is not supplied the
+axis layout is estimated from <code>reference</code> as well. For
+<code>normalize = "minmax"</code> only the reference range matters, so a
+two-row data.frame of per-variable minima and maxima is enough; for
+<code>normalize = "rank"</code> the full reference distribution is used. Values
+in <code>data</code> outside the reference range are held at the axis bounds
+(with a warning)</p></dd>
 
 
 <dt id="arg-min-degrees">min_degrees<a class="anchor" aria-label="anchor" href="#arg-min-degrees"></a></dt>
@@ -142,6 +157,13 @@ correlation of <code>vars</code></p></dd>
   <dt>cor_matrix</dt>
 <dd><p>the matrix used for axis placement</p></dd>
 
+  <dt>scale_ref</dt>
+<dd><p>the data defining the radial scale: <code>reference</code> if
+    supplied, otherwise <code>data</code></p></dd>
+
+  <dt>has_reference</dt>
+<dd><p>TRUE when an external <code>reference</code> was supplied</p></dd>
+
 
 </dl><p>Use <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> methods on the result.</p>
     </div>
@@ -154,8 +176,8 @@ correlation of <code>vars</code></p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Normalization: minmax </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Axis positions (degrees):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  mpg   hp qsec drat   wt disp </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    0   19   94  293  338  350 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  mpg disp   wt drat qsec   hp </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    0   10   22   67  266  341 </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="coradar-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
@@ -170,6 +192,14 @@ correlation of <code>vars</code></p></dd>
 <span class="r-in"><span>             groups <span class="op">=</span> <span class="st">"am"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="coradar-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># axes and radial scale taken from an external reference cohort, so the</span></span></span>
+<span class="r-in"><span><span class="co"># two subgroup plots below are directly comparable</span></span></span>
+<span class="r-in"><span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mpg"</span>, <span class="st">"disp"</span>, <span class="st">"hp"</span>, <span class="st">"drat"</span>, <span class="st">"wt"</span>, <span class="st">"qsec"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">coradar</span><span class="op">(</span><span class="va">mtcars</span><span class="op">[</span><span class="va">mtcars</span><span class="op">$</span><span class="va">am</span> <span class="op">==</span> <span class="fl">0</span>, <span class="op">]</span>, vars <span class="op">=</span> <span class="va">v</span>, reference <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="coradar-4.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">coradar</span><span class="op">(</span><span class="va">mtcars</span><span class="op">[</span><span class="va">mtcars</span><span class="op">$</span><span class="va">am</span> <span class="op">==</span> <span class="fl">1</span>, <span class="op">]</span>, vars <span class="op">=</span> <span class="va">v</span>, reference <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="coradar-5.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -181,7 +211,7 @@ correlation of <code>vars</code></p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">VisXplore</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,30 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.4.0" id="visxplore-240">VisXplore 2.4.0<a class="anchor" aria-label="anchor" href="#visxplore-240"></a></h2>
+<div class="section level3">
+<h3 id="external-correlation-specifications-2-4-0">External correlation specifications<a class="anchor" aria-label="anchor" href="#external-correlation-specifications-2-4-0"></a></h3>
+<ul><li>New <code>reference</code> argument to <code><a href="../reference/coradar.html">coradar()</a></code>: supply an external cohort that defines the radial scale, so a given radius means the same thing across datasets and two co-radar plots of different samples are directly comparable. When <code>cor_matrix</code> is not also supplied, the axis layout is estimated from <code>reference</code> as well, which keeps the axis angles identical across those plots</li>
+<li>For <code>normalize = "minmax"</code> only the reference range matters, so a two-row data.frame of per-variable minima and maxima is a sufficient reference; <code>normalize = "rank"</code> uses the full reference distribution</li>
+<li>Data values outside the reference range are held at the axis bounds with a warning, matching the existing behavior for individual overlays</li>
+<li>Individual overlays (<code>plot(individuals = ...)</code>) are now scaled on the reference too, so overlaid people and archetypes share one scale</li>
+<li>
+<code>visx_coradar</code> objects gained <code>scale_ref</code> and <code>has_reference</code> fields, and <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> reports when an external reference is in use</li>
+</ul></div>
+<div class="section level3">
+<h3 id="multiply-imputed-individuals-2-4-0">Multiply imputed individuals<a class="anchor" aria-label="anchor" href="#multiply-imputed-individuals-2-4-0"></a></h3>
+<ul><li>New <code>imputed</code> argument to <code><a href="../reference/plot.visx_coradar.html">plot.visx_coradar()</a></code>: pass a list of M completed data.frames — for example <code>mice::complete(imp, "all")</code> — to draw a person with missing values as a shaded envelope across the imputations with a dashed median shape. Because an observed value is identical in every imputation, the envelope pinches to a point on observed axes and opens into a region only where a value was imputed, so a single shape shows both what is known and how uncertain the rest is</li>
+<li>
+<code>imputed_rows</code> selects which individuals to draw, and defaults to just the rows that differ across the imputations — the people who were actually missing a plotted variable. Complete rows carry no uncertainty and would plot as bare outlines, so passing a full <code>mice::complete(imp, "all")</code> draws only the incomplete cases rather than every row. If more than 12 rows qualify, <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> asks for an explicit <code>imputed_rows</code> instead of overplotting</li>
+<li>
+<code>extent</code> chooses the full range of the draws (default) or a quantile interval set by <code>probs</code>
+</li>
+<li>Any list of completed data.frames works, so <code>mice</code> is not a dependency; passing a <code>mids</code> object directly gives an error pointing at <code>mice::complete(obj, "all")</code>
+</li>
+<li>Out-of-range imputed draws are clamped with a single warning rather than one per imputation</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.3.0" id="visxplore-230">VisXplore 2.3.0<a class="anchor" aria-label="anchor" href="#visxplore-230"></a></h2>
 <div class="section level3">
@@ -180,7 +204,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -1,5 +1,54 @@
 # Changelog
 
+## VisXplore 2.4.0
+
+### External correlation specifications
+
+- New `reference` argument to
+  [`coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/coradar.md):
+  supply an external cohort that defines the radial scale, so a given
+  radius means the same thing across datasets and two co-radar plots of
+  different samples are directly comparable. When `cor_matrix` is not
+  also supplied, the axis layout is estimated from `reference` as well,
+  which keeps the axis angles identical across those plots
+- For `normalize = "minmax"` only the reference range matters, so a
+  two-row data.frame of per-variable minima and maxima is a sufficient
+  reference; `normalize = "rank"` uses the full reference distribution
+- Data values outside the reference range are held at the axis bounds
+  with a warning, matching the existing behavior for individual overlays
+- Individual overlays (`plot(individuals = ...)`) are now scaled on the
+  reference too, so overlaid people and archetypes share one scale
+- `visx_coradar` objects gained `scale_ref` and `has_reference` fields,
+  and [`print()`](https://rdrr.io/r/base/print.html) reports when an
+  external reference is in use
+
+### Multiply imputed individuals
+
+- New `imputed` argument to
+  [`plot.visx_coradar()`](https://CU-Anschutz-GMWG.github.io/VisXplore/reference/plot.visx_coradar.md):
+  pass a list of M completed data.frames — for example
+  `mice::complete(imp, "all")` — to draw a person with missing values as
+  a shaded envelope across the imputations with a dashed median shape.
+  Because an observed value is identical in every imputation, the
+  envelope pinches to a point on observed axes and opens into a region
+  only where a value was imputed, so a single shape shows both what is
+  known and how uncertain the rest is
+- `imputed_rows` selects which individuals to draw, and defaults to just
+  the rows that differ across the imputations — the people who were
+  actually missing a plotted variable. Complete rows carry no
+  uncertainty and would plot as bare outlines, so passing a full
+  `mice::complete(imp, "all")` draws only the incomplete cases rather
+  than every row. If more than 12 rows qualify,
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) asks for an
+  explicit `imputed_rows` instead of overplotting
+- `extent` chooses the full range of the draws (default) or a quantile
+  interval set by `probs`
+- Any list of completed data.frames works, so `mice` is not a
+  dependency; passing a `mids` object directly gives an error pointing
+  at `mice::complete(obj, "all")`
+- Out-of-range imputed draws are clamped with a single warning rather
+  than one per imputation
+
 ## VisXplore 2.3.0
 
 ### Co-radar improvements

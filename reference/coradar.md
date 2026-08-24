@@ -17,6 +17,7 @@ coradar(
   groups = NULL,
   normalize = c("minmax", "rank", "none"),
   cor_matrix = NULL,
+  reference = NULL,
   min_degrees = 10,
   max_iterations = 500
 )
@@ -65,7 +66,21 @@ coradar(
 - cor_matrix:
 
   optional correlation/association matrix (or `visx_cor` object) used
-  for axis placement; defaults to Spearman correlation of `vars`
+  for axis placement. Defaults to the Spearman correlation of `vars` in
+  `reference` if supplied, otherwise in `data`. Use this to lay the axes
+  out according to an association structure estimated elsewhere (a
+  published matrix, or a reference cohort)
+
+- reference:
+
+  optional data.frame of external reference data containing `vars`, used
+  to define the radial scale so that a given radius means the same thing
+  across datasets. When `cor_matrix` is not supplied the axis layout is
+  estimated from `reference` as well. For `normalize = "minmax"` only
+  the reference range matters, so a two-row data.frame of per-variable
+  minima and maxima is enough; for `normalize = "rank"` the full
+  reference distribution is used. Values in `data` outside the reference
+  range are held at the axis bounds (with a warning)
 
 - min_degrees:
 
@@ -107,6 +122,15 @@ A `visx_coradar` object (S3 class) containing:
 
   the matrix used for axis placement
 
+- scale_ref:
+
+  the data defining the radial scale: `reference` if supplied, otherwise
+  `data`
+
+- has_reference:
+
+  TRUE when an external `reference` was supplied
+
 Use [`print()`](https://rdrr.io/r/base/print.html) and
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) methods on the
 result.
@@ -120,8 +144,8 @@ result
 #> Normalization: minmax 
 #> 
 #> Axis positions (degrees):
-#>  mpg   hp qsec drat   wt disp 
-#>    0   19   94  293  338  350 
+#>  mpg disp   wt drat qsec   hp 
+#>    0   10   22   67  266  341 
 plot(result)
 
 
@@ -134,5 +158,13 @@ plot(coradar(mtcars, vars = c("mpg", "disp", "hp", "drat", "wt", "qsec"),
 # group by an existing column
 plot(coradar(mtcars, vars = c("mpg", "disp", "hp", "wt", "qsec"),
              groups = "am"))
+
+
+# axes and radial scale taken from an external reference cohort, so the
+# two subgroup plots below are directly comparable
+v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+plot(coradar(mtcars[mtcars$am == 0, ], vars = v, reference = mtcars))
+
+plot(coradar(mtcars[mtcars$am == 1, ], vars = v, reference = mtcars))
 
 ```
