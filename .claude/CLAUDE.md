@@ -47,7 +47,7 @@ All source is in `R/`:
 
 ### S3 Class System
 - **`visx_cor.R`** — `visx_cor` S3 class returned by `pairwise_cor()`. Methods: `print()`, `summary()` (wraps `corstars()`), `plot()` (wraps `npc_mixed_cor()`), `as.data.frame()`
-- **`coradar.R`** — `visx_coradar` S3 class returned by `coradar()`: correlation-based radar plots where axis angles come from the association structure (force-directed layout in `coradar_pos()`). Methods: `print()`, `plot()` (archetype polygons + variability bands, `individuals` and `highlight` overlays)
+- **`coradar.R`** — `visx_coradar` S3 class returned by `coradar()`: correlation-based radar plots where axis angles come from the association structure (force-directed layout in `coradar_pos()`). Methods: `print()`, `plot()` (archetype polygons + variability bands, `individuals`, `imputed`, and `highlight` overlays)
 - **`data_check.R`** — `visx_check` S3 class returned by `data_check()`. Has `print()` method and internal `format_check_html()` for Shiny rendering
 
 ### Core Statistical Engine
@@ -73,6 +73,8 @@ All source is in `R/`:
 - **Dual color scales**: The network plot uses `ggnewscale::new_scale_color()` to show directional (Spearman/GKgamma with sign) and non-directional (PseudoR) correlations on the same plot.
 - **MDS layout**: Network plot positions computed via `cmdscale()` on `1 - |correlation|` dissimilarity, with fallback perturbation if result is < 2 dimensions.
 - **Co-radar axis layout**: `coradar_pos()` targets angular separation `(1 - |r|) * pi` per pair, anneals a vectorized force simulation from two starts (equidistant and MDS-derived angles), polishes with coordinate descent, keeps the lower-stress solution, then enforces a minimum axis separation. Grant context and the original prototype live in `archive/coradar/`.
+- **Co-radar external reference**: `coradar(reference = )` takes an external cohort that defines the radial scale (via `rescale_var(ref = )`) and, unless `cor_matrix` is given, the axis layout. This is what makes two co-radar plots of different samples comparable — without it each sample is min-max scaled to its own range. Local values outside the reference range are clamped with a warning, same as individual overlays. Stored as `scale_ref`/`has_reference` on the object.
+- **Multiply imputed shapes**: `plot(imputed = )` takes a plain list of M completed data.frames (`mice::complete(imp, "all")` returns exactly this), so `mice` is not a dependency. The envelope is built with the same annulus construction as the variability band. No special-casing of observed vs. imputed axes is needed: observed values are identical across imputations, so `lo == hi` there and the band pinches to a point on its own.
 - **`nnet` in Imports, not Depends**: Pseudo-R-squared is computed by the internal `nagelkerke_r2()` in `globals.R` rather than `DescTools::PseudoR2`, because DescTools re-evaluates the model call and fails when `multinom()` is not on the search path. Keep using `nnet::multinom()` (namespaced) and `nagelkerke_r2()`.
 
 ## Testing

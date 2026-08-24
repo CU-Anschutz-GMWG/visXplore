@@ -188,8 +188,19 @@ enforce_min_sep <- function(theta, min_sep) {
 #'  \code{"rank"} (rank-transform, robust to skew), or \code{"none"}
 #'  (data must already share a comparable non-negative scale)
 #' @param cor_matrix optional correlation/association matrix (or
-#'  \code{visx_cor} object) used for axis placement; defaults to Spearman
-#'  correlation of \code{vars}
+#'  \code{visx_cor} object) used for axis placement. Defaults to the Spearman
+#'  correlation of \code{vars} in \code{reference} if supplied, otherwise in
+#'  \code{data}. Use this to lay the axes out according to an association
+#'  structure estimated elsewhere (a published matrix, or a reference cohort)
+#' @param reference optional data.frame of external reference data containing
+#'  \code{vars}, used to define the radial scale so that a given radius means
+#'  the same thing across datasets. When \code{cor_matrix} is not supplied the
+#'  axis layout is estimated from \code{reference} as well. For
+#'  \code{normalize = "minmax"} only the reference range matters, so a
+#'  two-row data.frame of per-variable minima and maxima is enough; for
+#'  \code{normalize = "rank"} the full reference distribution is used. Values
+#'  in \code{data} outside the reference range are held at the axis bounds
+#'  (with a warning)
 #' @param min_degrees minimum angular separation between axes, in degrees
 #' @param max_iterations annealing iterations for the axis layout
 #'
@@ -203,6 +214,9 @@ enforce_min_sep <- function(theta, min_sep) {
 #'   \item{group_source}{how groups were formed: "overall", "column",
 #'     "assignment", or "kmeans"}
 #'   \item{cor_matrix}{the matrix used for axis placement}
+#'   \item{scale_ref}{the data defining the radial scale: \code{reference} if
+#'     supplied, otherwise \code{data}}
+#'   \item{has_reference}{TRUE when an external \code{reference} was supplied}
 #' }
 #' Use \code{print()} and \code{plot()} methods on the result.
 #'
@@ -220,11 +234,17 @@ enforce_min_sep <- function(theta, min_sep) {
 #' plot(coradar(mtcars, vars = c("mpg", "disp", "hp", "wt", "qsec"),
 #'              groups = "am"))
 #'
+#' # axes and radial scale taken from an external reference cohort, so the
+#' # two subgroup plots below are directly comparable
+#' v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+#' plot(coradar(mtcars[mtcars$am == 0, ], vars = v, reference = mtcars))
+#' plot(coradar(mtcars[mtcars$am == 1, ], vars = v, reference = mtcars))
+#'
 #' @importFrom stats complete.cases cor kmeans
 #' @export
 coradar <- function(data, vars = NULL, groups = NULL,
                     normalize = c("minmax", "rank", "none"),
-                    cor_matrix = NULL,
+                    cor_matrix = NULL, reference = NULL,
                     min_degrees = 10, max_iterations = 500) {
   normalize <- match.arg(normalize)
   if (!is.data.frame(data)) stop("data must be a data.frame.")
@@ -266,22 +286,20 @@ coradar <- function(data, vars = NULL, groups = NULL,
   }
   if (nrow(x) < 2) stop("Not enough complete rows to summarize.")
 
+  # an external reference cohort defines the radial scale, and (unless a
+  # cor_matrix is given) the association structure behind the axis layout
+  scale_ref <- validate_reference(reference, vars)
+  has_reference <- !is.null(scale_ref)
+  if (!has_reference) scale_ref <- x
+
   # axis placement from association structure
   if (is.null(cor_matrix)) {
-    constant <- vapply(x, function(v) {
-      rng <- range(v, na.rm = TRUE)
-      diff(rng) == 0
-    }, logical(1))
-    if (any(constant)) {
-      message("Constant variable(s) treated as uncorrelated on the layout: ",
-              paste(vars[constant], collapse = ", "))
+    cor_source <- if (has_reference) scale_ref else x
+    if (has_reference && sum(complete.cases(cor_source)) < 3) {
+      stop("reference has fewer than 3 complete rows, which is not enough to ",
+           "estimate an association structure. Supply cor_matrix instead.")
     }
-    # constant columns make cor() warn about zero standard deviation and
-    # return NA; we handle those NAs explicitly below, so suppress the warning
-    cmat <- suppressWarnings(cor(x, method = "spearman"))
-    # a constant column has undefined correlation (NA); place it neutrally
-    cmat[is.na(cmat)] <- 0
-    diag(cmat) <- 1
+    cmat <- spearman_layout(cor_source, vars)
   } else {
     if (inherits(cor_matrix, "visx_cor")) cor_matrix <- cor_matrix$cor_value
     cor_matrix <- as.matrix(cor_matrix)
@@ -298,8 +316,24 @@ coradar <- function(data, vars = NULL, groups = NULL,
   }
   positions <- coradar_pos(cmat, min_degrees, max_iterations)
 
-  x_scaled <- as.data.frame(lapply(x, rescale_var, method = normalize),
-                            check.names = FALSE)
+  # normalize on the reference scale; with an external reference the data can
+  # fall outside it, so clamp to keep radii on the axes (see rescale_var)
+  if (has_reference && normalize == "minmax") {
+    outside <- vars[vapply(vars, function(v) {
+      rng <- range(scale_ref[[v]], na.rm = TRUE)
+      any(x[[v]] < rng[1] | x[[v]] > rng[2], na.rm = TRUE)
+    }, logical(1))]
+    if (length(outside)) {
+      warning("Values outside the reference range were clamped to the axis ",
+              "bounds for: ", paste(outside, collapse = ", "))
+    }
+  }
+  x_scaled <- as.data.frame(
+    Map(function(v, nm) rescale_var(v, normalize, ref = scale_ref[[nm]],
+                                    clamp = has_reference),
+        x, vars),
+    check.names = FALSE
+  )
 
   # resolve archetype groups
   if (is.null(groups)) {
@@ -346,10 +380,70 @@ coradar <- function(data, vars = NULL, groups = NULL,
       group_var = group_var,
       group_source = group_source,
       cor_matrix = cmat,
-      normalize = normalize
+      normalize = normalize,
+      scale_ref = scale_ref,
+      has_reference = has_reference
     ),
     class = "visx_coradar"
   )
+}
+
+
+#' Validate an external reference cohort for coradar()
+#' @param reference a data.frame (or NULL)
+#' @param vars variables that must be present and numeric
+#' @return the reference restricted to vars, or NULL
+#' @noRd
+validate_reference <- function(reference, vars) {
+  if (is.null(reference)) return(NULL)
+  if (!is.data.frame(reference)) stop("reference must be a data.frame.")
+  reference <- as.data.frame(reference, check.names = FALSE)
+  missing_ref <- setdiff(vars, names(reference))
+  if (length(missing_ref)) {
+    stop("reference is missing plotted variables: ",
+         paste(missing_ref, collapse = ", "))
+  }
+  ref <- reference[vars]
+  non_num <- vars[!vapply(ref, is.numeric, logical(1))]
+  if (length(non_num)) {
+    stop("reference variables must be numeric. Non-numeric: ",
+         paste(non_num, collapse = ", "))
+  }
+  empty <- vars[vapply(ref, function(v) all(is.na(v)), logical(1))]
+  if (length(empty)) {
+    stop("reference has no non-missing values for: ",
+         paste(empty, collapse = ", "))
+  }
+  ref
+}
+
+
+#' Spearman association matrix used for axis layout
+#'
+#' Constant columns have undefined correlation; they are placed neutrally so
+#' the layout still runs.
+#' @param df a data.frame containing vars
+#' @param vars variables to include
+#' @return a square correlation matrix over vars
+#' @noRd
+spearman_layout <- function(df, vars) {
+  d <- df[vars]
+  constant <- vapply(d, function(v) {
+    rng <- range(v, na.rm = TRUE)
+    isTRUE(diff(rng) == 0)
+  }, logical(1))
+  if (any(constant)) {
+    message("Constant variable(s) treated as uncorrelated on the layout: ",
+            paste(vars[constant], collapse = ", "))
+  }
+  # constant columns make cor() warn about zero standard deviation and return
+  # NA; we handle those NAs explicitly below, so suppress the warning
+  cmat <- suppressWarnings(
+    cor(d, method = "spearman", use = "pairwise.complete.obs")
+  )
+  cmat[is.na(cmat)] <- 0
+  diag(cmat) <- 1
+  cmat
 }
 
 
@@ -397,6 +491,10 @@ print.visx_coradar <- function(x, ...) {
         paste(levels(x$groups), collapse = ", "), "\n", sep = "")
   }
   cat("Normalization:", x$normalize, "\n")
+  if (isTRUE(x$has_reference)) {
+    cat("Radial scale from an external reference of ",
+        nrow(x$scale_ref), " rows\n", sep = "")
+  }
   deg <- round(sort(x$positions) * 180 / pi)
   cat("\nAxis positions (degrees):\n")
   print(deg)
@@ -428,6 +526,24 @@ print.visx_coradar <- function(x, ...) {
 #'  the original data)
 #' @param highlight optional character vector of variable names whose axes are
 #'  emphasized; remaining axes and labels are greyed out
+#' @param imputed optional multiply imputed data for individuals with missing
+#'  values: a list of M completed data.frames with identical rows, each
+#'  containing the plotted variables (for example
+#'  \code{mice::complete(imp, "all")}). Each requested individual is drawn as
+#'  a shaded envelope across the M draws with a dashed median shape. Where a
+#'  variable was observed all draws agree, so the envelope pinches to a point
+#'  on that axis; where it was imputed the envelope opens into a region
+#'  spanning the plausible values
+#' @param imputed_rows rows of the completed data.frames to draw. These index
+#'  the data that was passed to the imputation model, not the complete-case
+#'  data held in \code{x}. Defaults to the rows that actually differ across
+#'  the imputations, i.e. the people who were missing at least one plotted
+#'  variable; complete rows carry no uncertainty and are skipped. If more than
+#'  12 rows qualify, choose them explicitly rather than overplotting
+#' @param extent width of the imputation envelope: \code{"range"} (default,
+#'  the full min-to-max span of the M draws) or \code{"quantile"}
+#' @param probs two probabilities defining the envelope when
+#'  \code{extent = "quantile"} (default 10th and 90th percentiles)
 #' @param label_size size of the axis labels (default 4)
 #' @param legend if TRUE, show the archetype legend when groups are present
 #' @param ... additional arguments (ignored)
@@ -440,12 +556,28 @@ print.visx_coradar <- function(x, ...) {
 #' plot(result, highlight = c("mpg", "wt"))
 #' plot(result, rounded = TRUE)
 #'
+#' # a person whose hp and wt are missing, with 5 imputations of each. In
+#' # practice these come from mice::complete(imp, "all")
+#' set.seed(1)
+#' person <- mtcars[1, c("mpg", "disp", "hp", "drat", "wt", "qsec")]
+#' imps <- lapply(1:5, function(i) {
+#'   d <- person
+#'   d$hp <- sample(mtcars$hp, 1)
+#'   d$wt <- sample(mtcars$wt, 1)
+#'   d
+#' })
+#' plot(result, imputed = imps, rounded = TRUE)
+#'
 #' @import ggplot2
 #' @export
 plot.visx_coradar <- function(x, sd_band = TRUE, band_width = 1,
                               rounded = FALSE,
                               individuals = NULL, highlight = NULL,
+                              imputed = NULL, imputed_rows = NULL,
+                              extent = c("range", "quantile"),
+                              probs = c(0.1, 0.9),
                               label_size = 4, legend = TRUE, ...) {
+  extent <- match.arg(extent)
   theta <- x$positions
   vars <- names(theta)
   has_groups <- !is.null(x$groups)
@@ -514,6 +646,32 @@ plot.visx_coradar <- function(x, sd_band = TRUE, band_width = 1,
                         aes(x, y, group = group, color = group),
                         fill = NA, linewidth = 1)
 
+  # overlay multiply imputed individuals as pinched envelopes. Same annulus
+  # construction as the variability band: outer and inner boundaries are
+  # polygon subgroups so even-odd filling leaves the interior open
+  if (!is.null(imputed)) {
+    env <- imputed_envelope(x, imputed, imputed_rows, extent, probs)
+    imp_bands <- do.call(rbind, lapply(seq_along(env), function(k) {
+      outer_xy <- radar_outline(theta, env[[k]]$hi[vars], rounded)
+      inner_xy <- radar_outline(theta, env[[k]]$lo[vars], rounded)
+      data.frame(
+        poly_id = k,
+        ring = rep(1:2, c(nrow(outer_xy), nrow(inner_xy))),
+        rbind(outer_xy, inner_xy)
+      )
+    }))
+    imp_mid <- do.call(rbind, lapply(seq_along(env), function(k) {
+      data.frame(poly_id = k, radar_outline(theta, env[[k]]$mid[vars], rounded))
+    }))
+    p <- p +
+      geom_polygon(data = imp_bands,
+                   aes(x, y, group = poly_id, subgroup = ring),
+                   fill = "grey20", alpha = 0.25, color = NA) +
+      geom_polygon(data = imp_mid, aes(x, y, group = poly_id),
+                   fill = NA, color = "black", linewidth = 0.6,
+                   linetype = "22")
+  }
+
   # overlay individual observations
   if (!is.null(individuals)) {
     ind <- individuals_scaled(x, individuals)
@@ -579,6 +737,131 @@ radar_outline <- function(pos, r, rounded, n_dense = 361L) {
 }
 
 
+#' Pointwise envelope of multiply imputed individuals
+#'
+#' Scales every completed dataset onto the co-radar's reference scale and
+#' summarizes, for each requested row, the spread of the M draws at each axis.
+#' Because an observed value is identical across imputations, \code{lo} and
+#' \code{hi} coincide there and the resulting band pinches to a point; only
+#' imputed axes open into a region.
+#'
+#' @param x a visx_coradar object
+#' @param imputed list of M completed data.frames with identical row counts
+#' @param rows rows of the completed data to summarize. Defaults to the rows
+#'  that actually differ across imputations, i.e. those that were missing at
+#'  least one plotted variable
+#' @param extent "range" (min to max) or "quantile"
+#' @param probs two probabilities used when extent = "quantile"
+#' @param max_auto largest number of rows to select automatically before
+#'  asking the caller to choose
+#' @return list with one element per row: row, lo, hi, mid (named by variable)
+#' @noRd
+imputed_envelope <- function(x, imputed, rows = NULL, extent = "range",
+                             probs = c(0.1, 0.9), max_auto = 12L) {
+  vars <- names(x$positions)
+  if (inherits(imputed, "mids")) {
+    stop("imputed must be a list of completed data.frames. Convert a mids ",
+         "object first with mice::complete(obj, \"all\").")
+  }
+  if (is.data.frame(imputed) || !is.list(imputed)) {
+    stop("imputed must be a list of completed data.frames, one per imputation.")
+  }
+  frames <- lapply(imputed, function(d) as.data.frame(d, check.names = FALSE))
+  if (length(frames) < 2) {
+    stop("imputed must contain at least 2 completed datasets.")
+  }
+  nr <- vapply(frames, nrow, integer(1))
+  if (length(unique(nr)) != 1) {
+    stop("all completed datasets must have the same number of rows.")
+  }
+  if (is.null(rows)) {
+    # only rows that were actually imputed carry any uncertainty; a complete
+    # row is identical in every draw and would plot as a bare outline
+    missing_vars <- setdiff(vars, Reduce(intersect, lapply(frames, names)))
+    if (length(missing_vars)) {
+      stop("imputed data is missing plotted variables: ",
+           paste(missing_vars, collapse = ", "))
+    }
+    base <- as.matrix(frames[[1]][vars])
+    varies <- Reduce(`|`, lapply(frames[-1], function(d) {
+      differs <- as.matrix(d[vars]) != base
+      differs[is.na(differs)] <- TRUE
+      apply(differs, 1, any)
+    }))
+    rows <- which(varies)
+    if (!length(rows)) {
+      stop("No rows differ across the imputations, so there is nothing to ",
+           "draw. The plotted variables are complete for every row; use ",
+           "individuals = to overlay observed people.")
+    }
+    if (length(rows) > max_auto) {
+      stop(length(rows), " rows have imputed values among the plotted ",
+           "variables, which would overplot. Choose which to draw with ",
+           "imputed_rows, e.g. imputed_rows = c(",
+           paste(rows[seq_len(min(3L, length(rows)))], collapse = ", "), ").")
+    }
+    if (length(rows) > 1) {
+      message("Drawing ", length(rows), " individuals with imputed values ",
+              "(rows ", paste(rows, collapse = ", "), ").")
+    }
+  } else {
+    if (!is.numeric(rows) || !is.null(dim(rows))) {
+      stop("imputed_rows must be a numeric vector of row indices.")
+    }
+    if (any(rows < 1 | rows > nr[1])) {
+      stop("imputed_rows out of range (1 to ", nr[1], ").")
+    }
+    rows <- as.integer(rows)
+  }
+  if (!length(rows)) stop("imputed_rows selected no rows.")
+
+  if (extent == "quantile") {
+    if (!is.numeric(probs) || length(probs) != 2 ||
+        any(is.na(probs)) || any(probs < 0 | probs > 1)) {
+      stop("probs must be two probabilities between 0 and 1.")
+    }
+    probs <- sort(probs)
+  }
+
+  # scale every draw on the co-radar's reference scale; out-of-range draws are
+  # clamped by individuals_scaled(), which would otherwise warn once per draw
+  clamped <- FALSE
+  scaled <- lapply(frames, function(d) {
+    withCallingHandlers(
+      individuals_scaled(x, d[rows, , drop = FALSE]),
+      warning = function(w) {
+        if (grepl("clamped", conditionMessage(w))) {
+          clamped <<- TRUE
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
+  })
+  if (clamped) {
+    warning("Some imputed values fall outside the reference range and were ",
+            "clamped to the axis bounds.")
+  }
+
+  lapply(seq_along(rows), function(i) {
+    draws <- do.call(rbind, lapply(scaled, function(s) {
+      as.numeric(s[i, vars])
+    }))
+    if (extent == "range") {
+      lo <- apply(draws, 2, min)
+      hi <- apply(draws, 2, max)
+    } else {
+      lo <- apply(draws, 2, stats::quantile, probs = probs[1], names = FALSE)
+      hi <- apply(draws, 2, stats::quantile, probs = probs[2], names = FALSE)
+    }
+    mid <- apply(draws, 2, stats::median)
+    list(row = rows[i],
+         lo = stats::setNames(lo, vars),
+         hi = stats::setNames(hi, vars),
+         mid = stats::setNames(mid, vars))
+  })
+}
+
+
 #' Resolve and normalize the individuals argument of plot.visx_coradar
 #' @param x a visx_coradar object
 #' @param individuals row indices or a data.frame of raw values
@@ -599,15 +882,17 @@ individuals_scaled <- function(x, individuals) {
     stop("individuals data is missing plotted variables: ",
          paste(missing_vars, collapse = ", "))
   }
+  # objects built before scale_ref existed fall back to the training data
+  ref <- if (!is.null(x$scale_ref)) x$scale_ref else x$data
   out <- individuals[vars]
   outside <- FALSE
   for (v in vars) {
-    rng <- range(x$data[[v]], na.rm = TRUE)
+    rng <- range(ref[[v]], na.rm = TRUE)
     if (x$normalize == "minmax" &&
         any(out[[v]] < rng[1] | out[[v]] > rng[2], na.rm = TRUE)) {
       outside <- TRUE
     }
-    out[[v]] <- rescale_var(out[[v]], x$normalize, ref = x$data[[v]],
+    out[[v]] <- rescale_var(out[[v]], x$normalize, ref = ref[[v]],
                             clamp = TRUE)
   }
   if (outside) {

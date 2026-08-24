@@ -10,6 +10,7 @@ coradar(
   groups = NULL,
   normalize = c("minmax", "rank", "none"),
   cor_matrix = NULL,
+  reference = NULL,
   min_degrees = 10,
   max_iterations = 500
 )
@@ -36,8 +37,20 @@ Ordinal variables can be included by coding them as numeric first.}
 (data must already share a comparable non-negative scale)}
 
 \item{cor_matrix}{optional correlation/association matrix (or
-\code{visx_cor} object) used for axis placement; defaults to Spearman
-correlation of \code{vars}}
+\code{visx_cor} object) used for axis placement. Defaults to the Spearman
+correlation of \code{vars} in \code{reference} if supplied, otherwise in
+\code{data}. Use this to lay the axes out according to an association
+structure estimated elsewhere (a published matrix, or a reference cohort)}
+
+\item{reference}{optional data.frame of external reference data containing
+\code{vars}, used to define the radial scale so that a given radius means
+the same thing across datasets. When \code{cor_matrix} is not supplied the
+axis layout is estimated from \code{reference} as well. For
+\code{normalize = "minmax"} only the reference range matters, so a
+two-row data.frame of per-variable minima and maxima is enough; for
+\code{normalize = "rank"} the full reference distribution is used. Values
+in \code{data} outside the reference range are held at the axis bounds
+(with a warning)}
 
 \item{min_degrees}{minimum angular separation between axes, in degrees}
 
@@ -54,6 +67,9 @@ A \code{visx_coradar} object (S3 class) containing:
   \item{group_source}{how groups were formed: "overall", "column",
     "assignment", or "kmeans"}
   \item{cor_matrix}{the matrix used for axis placement}
+  \item{scale_ref}{the data defining the radial scale: \code{reference} if
+    supplied, otherwise \code{data}}
+  \item{has_reference}{TRUE when an external \code{reference} was supplied}
 }
 Use \code{print()} and \code{plot()} methods on the result.
 }
@@ -78,5 +94,11 @@ plot(coradar(mtcars, vars = c("mpg", "disp", "hp", "drat", "wt", "qsec"),
 # group by an existing column
 plot(coradar(mtcars, vars = c("mpg", "disp", "hp", "wt", "qsec"),
              groups = "am"))
+
+# axes and radial scale taken from an external reference cohort, so the
+# two subgroup plots below are directly comparable
+v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+plot(coradar(mtcars[mtcars$am == 0, ], vars = v, reference = mtcars))
+plot(coradar(mtcars[mtcars$am == 1, ], vars = v, reference = mtcars))
 
 }

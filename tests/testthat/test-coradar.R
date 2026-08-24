@@ -289,3 +289,204 @@ test_that("rounded outline traces a circular arc between equal values", {
   arc <- radius[angle >= 0 & angle <= pi / 2]
   expect_equal(arc, rep(0.5, length(arc)), tolerance = 1e-9)
 })
+
+##### coradar: external reference scale #####
+
+test_that("a reference cohort puts subgroups on a common scale", {
+  v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+  a <- coradar(mtcars[mtcars$am == 0, ], vars = v, reference = mtcars)
+  b <- coradar(mtcars[mtcars$am == 1, ], vars = v, reference = mtcars)
+  # same reference association structure means the same axis layout
+  expect_equal(a$positions, b$positions)
+  expect_true(a$has_reference)
+  expect_equal(nrow(a$scale_ref), nrow(mtcars))
+  # manual cars have higher mpg, and on a shared scale that is comparable
+  mpg_a <- a$stats$mean[a$stats$variable == "mpg"]
+  mpg_b <- b$stats$mean[b$stats$variable == "mpg"]
+  expect_gt(mpg_b, mpg_a)
+  # without a reference each subgroup is rescaled to its own range, so both
+  # sit near the middle of their own axis and the comparison is lost
+  a2 <- coradar(mtcars[mtcars$am == 0, ], vars = v)
+  b2 <- coradar(mtcars[mtcars$am == 1, ], vars = v)
+  expect_equal(mean(a2$stats$mean[a2$stats$variable == "mpg"]),
+               mean(b2$stats$mean[b2$stats$variable == "mpg"]),
+               tolerance = 0.2)
+})
+
+test_that("reference scaling matches the reference range exactly", {
+  v <- c("mpg", "disp", "hp", "wt")
+  cr <- coradar(mtcars, vars = v, reference = mtcars)
+  rng <- range(mtcars$mpg)
+  expect_equal(cr$data_scaled$mpg,
+               (cr$data$mpg - rng[1]) / diff(rng))
+})
+
+test_that("values outside the reference range are clamped with a warning", {
+  v <- c("mpg", "disp", "hp", "wt")
+  ref <- mtcars[mtcars$mpg < 25, ]
+  expect_warning(cr <- coradar(mtcars, vars = v, reference = ref),
+                 "outside the reference range")
+  expect_true(all(cr$data_scaled$mpg >= 0 & cr$data_scaled$mpg <= 1))
+})
+
+test_that("a two-row reference defines a minmax scale when cor_matrix is given", {
+  v <- c("mpg", "disp", "hp", "wt")
+  cm <- cor(mtcars[v], method = "spearman")
+  ref <- as.data.frame(lapply(mtcars[v], range))
+  cr <- coradar(mtcars, vars = v, cor_matrix = cm, reference = ref)
+  expect_true(cr$has_reference)
+  expect_equal(max(cr$data_scaled$mpg), 1)
+  expect_equal(min(cr$data_scaled$mpg), 0)
+})
+
+test_that("individual overlays use the reference scale", {
+  v <- c("mpg", "disp", "hp", "wt")
+  cr <- coradar(mtcars[1:10, ], vars = v, reference = mtcars)
+  scaled <- individuals_scaled(cr, mtcars[1, ])
+  rng <- range(mtcars$mpg)
+  expect_equal(scaled$mpg, (mtcars$mpg[1] - rng[1]) / diff(rng))
+})
+
+test_that("coradar rejects bad reference input", {
+  v <- c("mpg", "disp", "hp", "wt")
+  expect_error(coradar(mtcars, vars = v, reference = "nope"), "data.frame")
+  expect_error(coradar(mtcars, vars = v, reference = mtcars[c("mpg", "hp")]),
+               "missing plotted variables")
+  expect_error(coradar(mtcars, vars = v, reference = mtcars[1:2, ]),
+               "fewer than 3 complete rows")
+  bad <- mtcars
+  bad$hp <- as.character(bad$hp)
+  expect_error(coradar(mtcars, vars = v, reference = bad), "must be numeric")
+  na_ref <- mtcars
+  na_ref$hp <- NA_real_
+  expect_error(coradar(mtcars, vars = v, reference = na_ref),
+               "no non-missing values")
+})
+
+##### plot.visx_coradar: multiply imputed individuals #####
+
+# a person with mpg and wt missing, imputed M times
+make_imps <- function(m = 10, vars = c("mpg", "disp", "hp", "drat", "wt", "qsec"),
+                      row = 1) {
+  withr::with_seed(42, lapply(seq_len(m), function(i) {
+    d <- mtcars[row, vars, drop = FALSE]
+    d$mpg <- sample(mtcars$mpg, 1)
+    d$wt <- sample(mtcars$wt, 1)
+    d
+  }))
+}
+
+test_that("the imputation envelope pinches to a point on observed axes", {
+  v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+  cr <- coradar(mtcars, vars = v)
+  env <- imputed_envelope(cr, make_imps())
+  expect_length(env, 1)
+  width <- env[[1]]$hi - env[[1]]$lo
+  # observed variables are identical across imputations: zero-width band
+  expect_equal(unname(width[c("disp", "hp", "drat", "qsec")]), rep(0, 4))
+  # imputed variables span a region
+  expect_true(all(width[c("mpg", "wt")] > 0))
+  # and the median passes exactly through the observed values
+  expect_equal(unname(env[[1]]$mid[c("disp", "hp")]),
+               unname(unlist(cr$data_scaled[1, c("disp", "hp")])))
+})
+
+test_that("the quantile envelope is no wider than the range envelope", {
+  v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+  cr <- coradar(mtcars, vars = v)
+  imps <- make_imps(30)
+  rng <- imputed_envelope(cr, imps, extent = "range")[[1]]
+  qnt <- imputed_envelope(cr, imps, extent = "quantile",
+                          probs = c(0.1, 0.9))[[1]]
+  expect_true(all(qnt$hi - qnt$lo <= rng$hi - rng$lo + 1e-12))
+  expect_true(qnt$hi["mpg"] - qnt$lo["mpg"] < rng$hi["mpg"] - rng$lo["mpg"])
+})
+
+test_that("plot.visx_coradar draws imputed envelopes", {
+  v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+  cr <- coradar(mtcars, vars = v)
+  imps <- make_imps()
+  expect_s3_class(plot(cr, imputed = imps), "ggplot")
+  expect_s3_class(plot(cr, imputed = imps, rounded = TRUE), "ggplot")
+  expect_s3_class(plot(cr, imputed = imps, extent = "quantile"), "ggplot")
+  # the envelope adds a band layer and a median outline
+  expect_equal(length(plot(cr, imputed = imps)$layers),
+               length(plot(cr)$layers) + 2)
+})
+
+test_that("imputed_rows selects individuals across the completed datasets", {
+  v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+  cr <- coradar(mtcars, vars = v)
+  imps <- withr::with_seed(1, lapply(1:5, function(i) {
+    d <- mtcars[1:4, v]
+    d$hp <- sample(mtcars$hp, 4)
+    d
+  }))
+  expect_length(imputed_envelope(cr, imps), 4)
+  env <- imputed_envelope(cr, imps, rows = c(2, 4))
+  expect_length(env, 2)
+  expect_equal(vapply(env, function(e) e$row, numeric(1)), c(2, 4))
+  expect_s3_class(plot(cr, imputed = imps, imputed_rows = c(2, 4)), "ggplot")
+})
+
+test_that("imputed values outside the reference range warn once", {
+  v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+  cr <- coradar(mtcars, vars = v)
+  imps <- lapply(1:5, function(i) {
+    d <- mtcars[1, v, drop = FALSE]
+    d$mpg <- 500 + i  # far above the observed maximum
+    d
+  })
+  expect_warning(env <- imputed_envelope(cr, imps), "clamped")
+  expect_equal(unname(env[[1]]$hi["mpg"]), 1)
+})
+
+test_that("imputed_rows defaults to the rows that were actually imputed", {
+  v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+  cr <- coradar(mtcars, vars = v)
+  # rows 2 and 5 vary across draws; everyone else is complete
+  imps <- withr::with_seed(3, lapply(1:6, function(i) {
+    d <- mtcars[1:8, v]
+    d$hp[c(2, 5)] <- sample(mtcars$hp, 2)
+    d
+  }))
+  expect_message(env <- imputed_envelope(cr, imps), "2 individuals")
+  expect_equal(vapply(env, function(e) e$row, numeric(1)), c(2, 5))
+  # a complete row would plot as a bare outline, so it is skipped
+  expect_s3_class(plot(cr, imputed = imps), "ggplot")
+})
+
+test_that("imputed_envelope refuses to overplot or draw nothing", {
+  v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+  cr <- coradar(mtcars, vars = v)
+  complete_imps <- lapply(1:5, function(i) mtcars[1:8, v])
+  expect_error(imputed_envelope(cr, complete_imps), "No rows differ")
+  many <- withr::with_seed(4, lapply(1:5, function(i) {
+    d <- mtcars[1:20, v]
+    d$hp <- sample(mtcars$hp, 20)
+    d
+  }))
+  expect_error(imputed_envelope(cr, many), "20 rows have imputed values")
+  # an explicit request is always honored, however many rows it names
+  expect_length(imputed_envelope(cr, many, rows = 1:20), 20)
+})
+
+test_that("imputed_envelope rejects bad input", {
+  v <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+  cr <- coradar(mtcars, vars = v)
+  imps <- make_imps()
+  expect_error(imputed_envelope(cr, mtcars[1, v]), "list of completed")
+  expect_error(imputed_envelope(cr, imps[1]), "at least 2")
+  expect_error(imputed_envelope(cr, list(mtcars[1, v], mtcars[1:2, v])),
+               "same number of rows")
+  expect_error(imputed_envelope(cr, imps, rows = 99), "out of range")
+  expect_error(imputed_envelope(cr, imps, rows = "a"), "numeric vector")
+  expect_error(imputed_envelope(cr, imps, extent = "quantile", probs = 0.5),
+               "two probabilities")
+  expect_error(imputed_envelope(cr, imps, extent = "quantile", probs = c(-1, 2)),
+               "two probabilities")
+  expect_error(imputed_envelope(cr, structure(list(), class = "mids")),
+               "mice::complete")
+  expect_error(plot(cr, imputed = lapply(imps, function(d) d["mpg"])),
+               "missing plotted variables")
+})
